@@ -91,9 +91,23 @@
   .ann-actions button{background:#0E191D;border:1px solid var(--brd);color:var(--txt);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer}
   .ann-actions .del{color:var(--accent)}
 
+  .auth{max-width:440px;margin:14vh auto 0;background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:22px}
+  .auth h2{font-family:'Bebas Neue';font-size:28px;letter-spacing:1px;margin:0 0 5px;color:var(--gold)}
+  .auth input{width:100%;background:#0E191D;border:1px solid var(--brd);color:var(--txt);padding:12px;border-radius:10px;font-family:Mulish;font-size:15px;margin:12px 0}
+  .auth-error{min-height:18px;color:#E8846B;font-size:13px;margin-top:10px}
+
 </style>
 </head>
 <body>
+<div class="auth" id="authPanel">
+  <h2>🔐 Административный доступ</h2>
+  <div class="sub">Введи административный код. Он сохранится только до закрытия вкладки.</div>
+  <input type="password" id="adminTokenInput" autocomplete="current-password" placeholder="Административный код">
+  <button class="save" id="authButton" onclick="authenticateAdmin()">Войти</button>
+  <div class="auth-error" id="authError"></div>
+</div>
+
+<div id="adminApp" style="display:none">
 <h1>⚙️ BRIXTON · Панель управления</h1>
 <div class="sub">Настройка админов и задач. Изменения сохраняются в облако.</div>
 
@@ -228,12 +242,10 @@
     <button class="save" id="saveAnnouncementsBtn" onclick="saveAnnouncements(this)" disabled>💾 Сохранить объявления</button>
   </div>
 </div>
+</div>
 
 <script>
-const SUPA_URL='https://ojzjwnxerbxnogahpfuz.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qemp3bnhlcmJ4bm9nYWhwZnV6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTA3Mzc2MSwiZXhwIjoyMDk2NjQ5NzYxfQ.bQPZZCMZmc_S3yqq41DDpv1o8p2wO-8G6QN7VJ_BcBc';
-const BASE=SUPA_URL+'/rest/v1/brixton_store';
-const H={apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY,'Content-Type':'application/json'};
+const WEBAPP_URL='https://script.google.com/macros/s/AKfycbyqfD8xsp2rkX0eEASg2FoYXbtYpzXlC4TeXoS09RRDjvLDAG6UCNQqcLodVWG5oebzdA/exec';
 
 const BRANCHES=[{id:'694866',name:'Менделеева'},{id:'1076318',name:'Энтузиастов'}];
 let admins={};   // { '694866':[...], '1076318':[...] }
@@ -244,7 +256,7 @@ let masterGoals={}; // {branchId:{masterName:{goods,services}}}
 let announcements=[]; // [{id,branch,title,text,active}]
 let announcementEditingId=null;
 let goalMasters={}; // действующие мастера из текущего месяца
-let fullStore={};  // полный объект из Supabase для авторасчёта целей
+let goalHistory={}; // только нужные факты прошлых месяцев
 const DAYS=['пн','вт','ср','чт','пт','сб','вс'];
 const BRNAME={'694866':'Менделеева','1076318':'Энтузиастов','both':'Оба филиала'};
 let selDays=DAYS.slice(); // выбранные дни недели
@@ -253,6 +265,40 @@ let editingId=null;       // id редактируемой задачи (или 
 let selDates=[];          // выбранные числа месяца: 1..31 и/или 'last'
 
 function setStatus(t,color){var s=document.getElementById('status');s.textContent=t;s.style.color=color||'var(--gold)';}
+async function apiPost(action,payload){
+  const adminToken=sessionStorage.getItem('BRIXTON_ADMIN_TOKEN')||'';
+  const r=await fetch(WEBAPP_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(Object.assign({action:action,adminToken:adminToken},payload))
+  });
+  const json=await r.json();
+  if(!json||!json.success)throw new Error(json&&json.error?json.error:'Ошибка API');
+  return json.data||{};
+}
+async function authenticateAdmin(){
+  const input=document.getElementById('adminTokenInput');
+  const button=document.getElementById('authButton');
+  const error=document.getElementById('authError');
+  const token=input.value.trim();
+  if(!token){error.textContent='Введи административный код.';input.focus();return;}
+  button.disabled=true;
+  button.textContent='Проверяю…';
+  error.textContent='';
+  sessionStorage.setItem('BRIXTON_ADMIN_TOKEN',token);
+  try{
+    await load();
+    document.getElementById('authPanel').style.display='none';
+    document.getElementById('adminApp').style.display='block';
+  }catch(e){
+    sessionStorage.removeItem('BRIXTON_ADMIN_TOKEN');
+    error.textContent=e.message||'Доступ запрещён';
+    input.select();
+  }finally{
+    button.disabled=false;
+    button.textContent='Войти';
+  }
+}
 function showPage(p){
   document.getElementById('page_admins').classList.toggle('show',p==='admins');
   document.getElementById('page_tasks').classList.toggle('show',p==='tasks');
@@ -267,10 +313,7 @@ function showPage(p){
 async function load(){
   setStatus('Загрузка…');
   try{
-    const r=await fetch(BASE+'?id=eq.main&select=data',{headers:H});
-    const rows=await r.json();
-    const data=rows&&rows[0]&&rows[0].data?rows[0].data:{};
-    fullStore=data;
+    const data=await apiPost('getAdminData',{});
     admins=data.admins||{};
     BRANCHES.forEach(b=>{if(!Array.isArray(admins[b.id]))admins[b.id]=[];});
     tasks=Array.isArray(data.tasks)?data.tasks:[];
@@ -284,18 +327,8 @@ async function load(){
     document.getElementById('salesGoal694866').value=salesGoals['694866']||60000;
     document.getElementById('salesGoal1076318').value=salesGoals['1076318']||60000;
 
-    const currentMonth=(data.months&&data.current&&data.months[data.current])?data.months[data.current]:null;
-    const barbers=(currentMonth&&Array.isArray(currentMonth.barbers))?currentMonth.barbers:[];
-    goalMasters={'694866':[],'1076318':[]};
-    barbers.forEach(b=>{
-      if(!b||!b.name)return;
-      const bid=b.loc==='Менделеева'?'694866':b.loc==='Энтузиастов'?'1076318':null;
-      if(!bid)return;
-      if(!goalMasters[bid].some(x=>x.name===b.name)){
-        goalMasters[bid].push({name:b.name,goods:Number(b.goods_rev)||0,services:Number(b.rev)||0});
-      }
-    });
-    Object.keys(goalMasters).forEach(bid=>goalMasters[bid].sort((a,b)=>a.name.localeCompare(b.name,'ru')));
+    goalMasters=data.goalMasters||{'694866':[],'1076318':[]};
+    goalHistory=data.goalHistory||{'694866':{},'1076318':{}};
     renderMasterGoals();
     document.getElementById('saveGoalsBtn').disabled=false;
     renderBranches();
@@ -308,7 +341,7 @@ async function load(){
     setStatus('Загружено. Настрой админов/задачи и сохрани.');
     document.getElementById('saveBtn').disabled=false;
     document.getElementById('saveTasksBtn').disabled=false;
-  }catch(e){setStatus('Ошибка загрузки: '+e.message,'#E8846B');}
+  }catch(e){setStatus('Ошибка загрузки: '+e.message,'#E8846B');throw e;}
 }
 
 function renderSchedType(){
@@ -434,13 +467,8 @@ function renderTasks(){
 async function saveTasks(btn){
   const old=btn.textContent;btn.disabled=true;btn.textContent='Сохраняю…';
   try{
-    const r=await fetch(BASE+'?id=eq.main&select=data',{headers:H});
-    const rows=await r.json();
-    const data=(rows&&rows[0]&&rows[0].data)?rows[0].data:{};
-    data.tasks=tasks;
-    const p=await fetch(BASE+'?id=eq.main',{method:'PATCH',headers:Object.assign({},H,{Prefer:'return=minimal'}),body:JSON.stringify({data:data})});
-    if(p.ok){setStatus('✓ Задачи сохранены в облако.','#7BD0A8');}
-    else{setStatus('Ошибка сохранения задач: HTTP '+p.status,'#E8846B');}
+    await apiPost('saveTasks',{tasks:tasks});
+    setStatus('✓ Задачи сохранены в облако.','#7BD0A8');
   }catch(e){setStatus('Ошибка сохранения задач: '+e.message,'#E8846B');}
   finally{btn.disabled=false;btn.textContent=old;}
 }
@@ -475,19 +503,18 @@ function renderBranches(){
 async function saveAdmins(btn){
   const old=btn.textContent;btn.disabled=true;btn.textContent='Сохраняю…';
   try{
-    // прочитать свежий data (чтобы не затереть freeSlots и др.)
-    const r=await fetch(BASE+'?id=eq.main&select=data',{headers:H});
-    const rows=await r.json();
-    const data=(rows&&rows[0]&&rows[0].data)?rows[0].data:{};
-    data.admins=admins;
-    const p=await fetch(BASE+'?id=eq.main',{method:'PATCH',headers:Object.assign({},H,{Prefer:'return=minimal'}),body:JSON.stringify({data:data})});
-    if(p.ok){setStatus('✓ Админы сохранены в облако.','#7BD0A8');}
-    else{setStatus('Ошибка сохранения: HTTP '+p.status,'#E8846B');}
+    await apiPost('saveAdmins',{admins:admins});
+    setStatus('✓ Админы сохранены в облако.','#7BD0A8');
   }catch(e){setStatus('Ошибка сохранения: '+e.message,'#E8846B');}
   finally{btn.disabled=false;btn.textContent=old;}
 }
 
-load();
+const savedAdminToken=sessionStorage.getItem('BRIXTON_ADMIN_TOKEN')||'';
+document.getElementById('adminTokenInput').value=savedAdminToken;
+document.getElementById('adminTokenInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')authenticateAdmin();
+});
+document.getElementById('adminTokenInput').focus();
 
 
 function parseMonthKey_(key){
@@ -506,16 +533,11 @@ function roundUp_(value, step){
 }
 
 function calculateAutomaticGoals(){
-  const monthsObj=(fullStore&&fullStore.months)?fullStore.months:{};
-  const now=new Date();
-  const currentMonthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  const hasHistory=Object.values(goalHistory||{}).some(branch=>
+    Object.values(branch||{}).some(master=>(master.goods||[]).length||(master.services||[]).length)
+  );
 
-  const monthEntries=Object.keys(monthsObj)
-    .map(key=>({meta:parseMonthKey_(key),data:monthsObj[key]}))
-    .filter(x=>x.meta&&x.meta.date<currentMonthStart&&x.data&&Array.isArray(x.data.barbers))
-    .sort((a,b)=>b.meta.date-a.meta.date);
-
-  if(!monthEntries.length){
+  if(!hasHistory){
     setStatus('Нет полных прошлых месяцев для автоматического расчёта.','#E8846B');
     return;
   }
@@ -527,23 +549,8 @@ function calculateAutomaticGoals(){
     const bid=input.dataset.branch;
     const masterName=input.dataset.master;
     const kind=input.dataset.kind;
-    const branchName=BRNAME[bid];
-
-    const values=[];
-    for(const month of monthEntries){
-      const barber=month.data.barbers.find(b=>b&&b.name===masterName&&b.loc===branchName);
-      if(!barber)continue;
-
-      const fact=kind==='goods'
-        ? Number(barber.goods_rev)||0
-        : Number(barber.rev)||0;
-
-      // Берём месяц только если у мастера в нём была фактическая работа/выручка.
-      if(fact<=0)continue;
-
-      values.push(fact);
-      if(values.length===3)break;
-    }
+    const history=goalHistory[bid]&&goalHistory[bid][masterName];
+    const values=history&&Array.isArray(history[kind])?history[kind]:[];
 
     if(!values.length){
       input.value=0;
@@ -765,23 +772,8 @@ async function saveAnnouncements(btn){
   btn.textContent='Сохраняю…';
 
   try{
-    const r=await fetch(BASE+'?id=eq.main&select=data',{headers:H});
-    const rows=await r.json();
-    const data=(rows&&rows[0]&&rows[0].data)?rows[0].data:{};
-
-    data.announcements=announcements;
-
-    const p=await fetch(BASE+'?id=eq.main',{
-      method:'PATCH',
-      headers:Object.assign({},H,{Prefer:'return=minimal'}),
-      body:JSON.stringify({data:data})
-    });
-
-    if(p.ok){
-      setStatus('✓ Объявления сохранены в облако.','#7BD0A8');
-    }else{
-      setStatus('Ошибка сохранения объявлений: HTTP '+p.status,'#E8846B');
-    }
+    await apiPost('saveAnnouncements',{announcements:announcements});
+    setStatus('✓ Объявления сохранены в облако.','#7BD0A8');
   }catch(e){
     setStatus('Ошибка сохранения объявлений: '+e.message,'#E8846B');
   }finally{
@@ -812,25 +804,8 @@ async function saveGoals(btn){
   });
 
   try{
-    const r=await fetch(BASE+'?id=eq.main&select=data',{headers:H});
-    const rows=await r.json();
-    const data=(rows&&rows[0]&&rows[0].data)?rows[0].data:{};
-
-    data.goals=goals;
-    data.salesGoals=salesGoals;
-    data.masterGoals=masterGoals;
-
-    const p=await fetch(BASE+'?id=eq.main',{
-      method:'PATCH',
-      headers:Object.assign({},H,{Prefer:'return=minimal'}),
-      body:JSON.stringify({data:data})
-    });
-
-    if(p.ok){
-      setStatus('✓ Все цели сохранены в облако.','#7BD0A8');
-    }else{
-      setStatus('Ошибка сохранения целей: HTTP '+p.status,'#E8846B');
-    }
+    await apiPost('saveGoals',{goals:goals,salesGoals:salesGoals,masterGoals:masterGoals});
+    setStatus('✓ Все цели сохранены в облако.','#7BD0A8');
   }catch(e){
     setStatus('Ошибка: '+e.message,'#E8846B');
   }finally{

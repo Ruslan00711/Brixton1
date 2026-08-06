@@ -9740,11 +9740,11 @@ document.addEventListener('change',function(e){
 
   function reload(){
     var st=el('bxStatus'); if(st) st.textContent='Загрузка…';
-    fetch(WEBAPP_URL+'?action=getFreeSlots')
+    fetch(WEBAPP_URL+'?action=getFreeSlots&t='+Date.now())
       .then(function(r){return r.json();})
-      .then(function(result){
-        if(!result||result.success!==true)throw new Error(result&&result.error?result.error:'Ошибка Apps Script');
-        FREE=result.data||null;
+      .then(function(json){
+        if(!json||!json.success)throw new Error(json&&json.error?json.error:'Ошибка API');
+        FREE=json.data||null;
         if(!FREE){if(st)st.textContent='В облаке нет данных окон — запусти buildFreeSlots в Apps Script.';return;}
         var gen=FREE.generatedAt?new Date(FREE.generatedAt).toLocaleString('ru-RU'):'—';
         if(st)st.textContent='Обновлено: '+gen+'  •  '+(FREE.dates||[]).join(', ');
