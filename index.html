@@ -9715,8 +9715,6 @@ document.addEventListener('change',function(e){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function(){
-  var SUPA_URL='https://ojzjwnxerbxnogahpfuz.supabase.co';
-  var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qemp3bnhlcmJ4bm9nYWhwZnV6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTA3Mzc2MSwiZXhwIjoyMDk2NjQ5NzYxfQ.bQPZZCMZmc_S3yqq41DDpv1o8p2wO-8G6QN7VJ_BcBc';
   var QUOTES=["Хорошая стрижка — это тихая уверенность.", "Стиль — это когда о тебе помнят раньше, чем ты заговорил.", "Мужчина начинается с деталей.", "Порядок в голове начинается с порядка на голове.", "Дисциплина — лучший стилист.", "Первое впечатление нельзя произвести дважды.", "Ухоженность — это уважение к себе и к другим.", "Внешний вид — визитка без слов.", "Настоящий класс не кричит — он аккуратно подстрижен.", "Будь острее своей бритвы.", "Уверенность надевается вместе со свежей стрижкой.", "Мелочи создают образ. Образ создаёт репутацию.", "Лучшая версия тебя начинается в кресле барбера.", "Стиль вне времени, мода — на сезон.", "Каждый день — повод выглядеть на все сто.", "Побеждает тот, кто следит за собой.", "Аккуратность — привычка сильных.", "Хочешь сменить настроение — начни с внешнего вида.", "Твой образ работает на тебя круглые сутки.", "Детали решают. Всегда.", "Свежая стрижка — как новый старт.", "Уважение начинается с зеркала.", "Форма держит содержание.", "Ухоженный мужчина не остаётся незамеченным.", "Инвестируй в себя — это всегда в плюс.", "Спокойствие, точность, стиль.", "Классика не выходит из моды.", "Сначала выглядишь — потом побеждаешь.", "Хороший барбер — половина успеха образа.", "Стрижка по расписанию — жизнь под контролем.", "Держи голову холодной, а стрижку — свежей.", "Меньше слов — больше стиля.", "Сила в деталях, характер в стиле.", "Твоё время — твой стиль. Не откладывай.", "Выглядеть хорошо — это привычка, а не случайность.", "Точность бритвы, чувство стиля, спокойствие духа."];
   var FREE=null, DAY=0;
   var masterOff={}, slotOff={}, quoteIdx={};
@@ -9735,10 +9733,11 @@ document.addEventListener('change',function(e){
 
   function reload(){
     var st=el('bxStatus'); if(st) st.textContent='Загрузка…';
-    fetch(SUPA_URL+'/rest/v1/brixton_store?id=eq.main&select=freeSlots:data->freeSlots',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}})
+    fetch(WEBAPP_URL+'?action=getFreeSlots&t='+Date.now())
       .then(function(r){return r.json();})
-      .then(function(rows){
-        FREE=rows&&rows[0]&&rows[0].freeSlots?rows[0].freeSlots:null;
+      .then(function(json){
+        if(!json||!json.success)throw new Error(json&&json.error?json.error:'Ошибка API');
+        FREE=json.data||null;
         if(!FREE){if(st)st.textContent='В облаке нет данных окон — запусти buildFreeSlots в Apps Script.';return;}
         var gen=FREE.generatedAt?new Date(FREE.generatedAt).toLocaleString('ru-RU'):'—';
         if(st)st.textContent='Обновлено: '+gen+'  •  '+(FREE.dates||[]).join(', ');
