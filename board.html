@@ -1959,8 +1959,10 @@ function weatherMeta(code){
 }
 
 async function loadWeather(){
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),10000);
   try{
-    const response=await fetch(WEATHER_URL,{cache:'no-store'});
+    const response=await fetch(WEATHER_URL,{cache:'no-store',signal:controller.signal});
     if(!response.ok)throw new Error('HTTP '+response.status);
     const data=await response.json();
     const current=data.current||{};
@@ -1975,6 +1977,8 @@ async function loadWeather(){
     document.getElementById('weatherIcon').textContent='◌';
     document.getElementById('weatherTemp').textContent='—°';
     document.getElementById('weatherText').textContent='Погода недоступна';
+  }finally{
+    clearTimeout(timeoutId);
   }
 }
 
@@ -1983,10 +1987,48 @@ setInterval(updateHeaderDateTime,1000);
 loadWeather();
 setInterval(loadWeather,15*60*1000);
 
+const BRIXTON_TIME_ZONE='Asia/Yekaterinburg';
+let loadInFlight=false;
+let loadRetryTimer=null;
+let boardRequestController=null;
+
+function isBrixtonWorkingHours(){
+  const parts=new Intl.DateTimeFormat('en-GB',{
+    timeZone:BRIXTON_TIME_ZONE,
+    hour:'2-digit',
+    minute:'2-digit',
+    hourCycle:'h23'
+  }).formatToParts(new Date());
+  const hour=Number(parts.find(x=>x.type==='hour').value);
+  const minute=Number(parts.find(x=>x.type==='minute').value);
+  const total=hour*60+minute;
+  return total>=570&&total<1350;
+}
+
+function clearLoadRetry(){
+  if(loadRetryTimer!==null){
+    clearTimeout(loadRetryTimer);
+    loadRetryTimer=null;
+  }
+}
+
+function scheduleLoadRetry(attempt,delay){
+  clearLoadRetry();
+  if(!isBrixtonWorkingHours())return;
+  loadRetryTimer=setTimeout(()=>{
+    loadRetryTimer=null;
+    load(attempt);
+  },delay);
+}
+
 async function load(attempt=1){
+  if(!isBrixtonWorkingHours()||loadInFlight||loadRetryTimer!==null)return;
+  loadInFlight=true;
+  boardRequestController=new AbortController();
+  const timeoutId=setTimeout(()=>boardRequestController.abort(),30000);
   try{
     const url=API+'?action=getTvBoard&company_id='+cid+'&_='+Date.now();
-    const response=await fetch(url,{cache:'no-store',redirect:'follow'});
+    const response=await fetch(url,{cache:'no-store',redirect:'follow',signal:boardRequestController.signal});
     const text=await response.text();
 
     if(!response.ok){
@@ -2006,21 +2048,25 @@ async function load(attempt=1){
     lastBoardLoadAt=Date.now();
     document.getElementById('error').style.display='none';
   }catch(e){
+    if(!isBrixtonWorkingHours())return;
     if(attempt<3){
-      setTimeout(()=>load(attempt+1),2000*attempt);
+      scheduleLoadRetry(attempt+1,2000*attempt);
       return;
     }
     document.getElementById('loading').style.display='none';
     const er=document.getElementById('error');
     er.style.display='flex';
     er.textContent='Ошибка загрузки данных. Повторяем автоматически…';
-    setTimeout(()=>load(1),15000);
+    scheduleLoadRetry(1,15000);
+  }finally{
+    clearTimeout(timeoutId);
+    boardRequestController=null;
+    loadInFlight=false;
   }
 }
 
 
 /* ───────── ЖИВЫЕ СОБЫТИЯ БЕЗ ЗВУКА ───────── */
-const EVENT_BOARD_API=API+'?action=getTvBoard&company_id='+cid;
 const EVENT_SCHEDULE_API=API+'?action=getTodaySchedule&company_id='+cid;
 
 let knownAppointmentIds=new Set();
@@ -2030,6 +2076,8 @@ let previousBoardSnapshot=null;
 let eventQueue=[];
 let eventShowing=false;
 let lastBoardLoadAt=0;
+let scheduleRequestController=null;
+let scheduleInFlight=false;
 
 function moneyEvent(n){
   return new Intl.NumberFormat('ru-RU').format(Math.round(Number(n)||0))+' ₽';
@@ -2080,8 +2128,12 @@ function showNextEvent(){
 }
 
 async function checkNewClientEvents(){
+  if(!isBrixtonWorkingHours()||scheduleInFlight)return;
+  scheduleInFlight=true;
+  scheduleRequestController=new AbortController();
+  const timeoutId=setTimeout(()=>scheduleRequestController.abort(),20000);
   try{
-    const response=await fetch(EVENT_SCHEDULE_API+'&_='+Date.now(),{cache:'no-store'});
+    const response=await fetch(EVENT_SCHEDULE_API+'&_='+Date.now(),{cache:'no-store',signal:scheduleRequestController.signal});
     if(!response.ok)return;
     const json=await response.json();
     if(!json||!json.success||!Array.isArray(json.data))return;
@@ -2119,7 +2171,13 @@ async function checkNewClientEvents(){
         meta:'к '+x.masterName+(x.time?' · '+x.time:'')
       });
     });
-  }catch(e){showScheduleError()}
+  }catch(e){
+    if(isBrixtonWorkingHours())showScheduleError();
+  }finally{
+    clearTimeout(timeoutId);
+    scheduleRequestController=null;
+    scheduleInFlight=false;
+  }
 }
 
 function createBoardSnapshot(data){
@@ -2231,26 +2289,6 @@ function detectBoardEvents(previous,current){
   }
 }
 
-async function checkBoardEvents(){
-  try{
-    const response=await fetch(EVENT_BOARD_API+'&_='+Date.now(),{cache:'no-store'});
-    if(!response.ok)return;
-    const json=await response.json();
-    if(!json||!json.success||!json.data)return;
-
-    const current=createBoardSnapshot(json.data);
-
-    if(!boardEventsReady){
-      previousBoardSnapshot=current;
-      boardEventsReady=true;
-      return;
-    }
-
-    detectBoardEvents(previousBoardSnapshot,current);
-    previousBoardSnapshot=current;
-  }catch(e){}
-}
-
 /*
  * ЕДИНЫЙ ЦИКЛ ОБНОВЛЕНИЯ:
  * — новые записи проверяются раз в минуту;
@@ -2258,19 +2296,41 @@ async function checkBoardEvents(){
  * — финансовые события определяются из того же ответа,
  *   отдельный запрос getTvBoard больше не выполняется.
  */
-async function refreshCycle(){
-  await checkNewClientEvents();
+let wasWorkingHours=false;
+let refreshCycleInFlight=false;
 
-  if(
-    !lastBoardLoadAt ||
-    Date.now()-lastBoardLoadAt>=300000
-  ){
-    await load(1);
+async function refreshCycle(){
+  const working=isBrixtonWorkingHours();
+
+  if(!working){
+    clearLoadRetry();
+    if(boardRequestController)boardRequestController.abort();
+    if(scheduleRequestController)scheduleRequestController.abort();
+    wasWorkingHours=false;
+    return;
+  }
+
+  if(refreshCycleInFlight)return;
+  refreshCycleInFlight=true;
+  const justOpened=wasWorkingHours===false;
+  wasWorkingHours=true;
+
+  try{
+    await checkNewClientEvents();
+
+    if(
+      justOpened ||
+      !lastBoardLoadAt ||
+      Date.now()-lastBoardLoadAt>=300000
+    ){
+      await load(1);
+    }
+  }finally{
+    refreshCycleInFlight=false;
   }
 }
 
-load(1);
-checkNewClientEvents();
+refreshCycle();
 setInterval(refreshCycle,60000);
 
 
