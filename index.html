@@ -8170,14 +8170,6 @@ function refreshCustomPeriod(){
   window.open(url, '_blank');
 }
 
-// Когда возвращаемся на вкладку сайта — подгружаем свежие данные из облака
-window.addEventListener('focus', async ()=>{
-  const keepMonth = store.current;
-  await cloudLoad();
-  if(keepMonth && store.months[keepMonth]) store.current = keepMonth;
-  renderAll();
-});
-
 // Кнопка "наверх"
 window.addEventListener('scroll', ()=>{
   const btn=document.getElementById('toTopBtn');
@@ -9743,10 +9735,10 @@ document.addEventListener('change',function(e){
 
   function reload(){
     var st=el('bxStatus'); if(st) st.textContent='Загрузка…';
-    fetch(SUPA_URL+'/rest/v1/brixton_store?id=eq.main&select=data',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}})
+    fetch(SUPA_URL+'/rest/v1/brixton_store?id=eq.main&select=freeSlots:data->freeSlots',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}})
       .then(function(r){return r.json();})
       .then(function(rows){
-        FREE=rows&&rows[0]&&rows[0].data?rows[0].data.freeSlots:null;
+        FREE=rows&&rows[0]&&rows[0].freeSlots?rows[0].freeSlots:null;
         if(!FREE){if(st)st.textContent='В облаке нет данных окон — запусти buildFreeSlots в Apps Script.';return;}
         var gen=FREE.generatedAt?new Date(FREE.generatedAt).toLocaleString('ru-RU'):'—';
         if(st)st.textContent='Обновлено: '+gen+'  •  '+(FREE.dates||[]).join(', ');
