@@ -12,11 +12,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ════════════════════════════════════════════════
-// SUPABASE — ОБЛАЧНОЕ ХРАНИЛИЩЕ
+// GOOGLE APPS SCRIPT — ОБЛАЧНОЕ ХРАНИЛИЩЕ
 // ════════════════════════════════════════════════
-const SUPABASE_URL = 'https://ojzjwnxerbxnogahpfuz.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qemp3bnhlcmJ4bm9nYWhwZnV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNzM3NjEsImV4cCI6MjA5NjY0OTc2MX0.JNlgdBTlKqP_NGHKYY2XAVpcO8-_w-a0sGMD32Uy8sc';
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyqfD8xsp2rkX0eEASg2FoYXbtYpzXlC4TeXoS09RRDjvLDAG6UCNQqcLodVWG5oebzdA/exec';
+const OWNER_TOKEN_KEY = 'brixton_owner_token';
+const OWNER_WRITABLE_SECTIONS = ['months','current','trn','salaries','notes','goods_manual','adSpend','sourceMasterShare'];
 
 const MASTER_YCLIENTS = {
   'Виталий':    {yclients_id: 2026841,  company_id: 694866},
@@ -32,15 +32,25 @@ const MASTER_YCLIENTS = {
   'Марина':     {yclients_id: 5316255,  company_id: 694866},
 };
 
+async function ownerRequest(action, data={}){
+  const ownerToken=sessionStorage.getItem(OWNER_TOKEN_KEY)||'';
+  const r=await fetch(WEBAPP_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action,...data,ownerToken})
+  });
+  if(!r.ok) throw new Error('Apps Script: HTTP '+r.status);
+  const result=await r.json();
+  if(!result||result.success!==true) throw new Error(result&&result.error?result.error:'Ошибка Apps Script');
+  return result.data;
+}
+
 async function cloudLoad(){
   try{
-    const r = await fetch(`${SUPABASE_URL}/rest/v1/brixton_store?id=eq.main&select=data,updated_at`, {
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY}
-    });
-    const rows = await r.json();
-    if(rows && rows[0] && rows[0].data && rows[0].data.months){
+    const data=await ownerRequest('getOwnerData');
+    if(data&&data.months){
       // Облако всегда главное — перезаписываем store и localStorage
-      store = rows[0].data;
+      store=data;
       Object.values(store.months).forEach(m => {
         m.barbers.forEach(b => {
           if(b.rookie===undefined) b.rookie=false;
@@ -66,27 +76,46 @@ async function cloudLoad(){
       // Синхронизируем localStorage с облаком
       try{localStorage.setItem('brixton_v4', JSON.stringify(store));}catch(e){}
       console.log('✅ Данные загружены из облака');
+      return true;
     }
+    throw new Error('Облачные данные не найдены');
   } catch(e) {
-    console.warn('Облако недоступно, используем localStorage', e);
+    console.warn('Ошибка загрузки данных владельца', e);
+    throw e;
   }
 }
 
-async function cloudSave(){
-  try{
-    await fetch(`${SUPABASE_URL}/rest/v1/brixton_store?id=eq.main`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({data: store, updated_at: new Date().toISOString()})
-    });
-  } catch(e) {
-    console.warn('Ошибка сохранения в облако', e);
-  }
+let _cloudSaveQueue=Promise.resolve();
+function cloudSave(sectionNames){
+  const names=[...new Set(Array.isArray(sectionNames)?sectionNames:[sectionNames])]
+    .filter(name=>OWNER_WRITABLE_SECTIONS.includes(name));
+  const sections={};
+  names.forEach(name=>{ sections[name]=JSON.parse(JSON.stringify(store[name])); });
+  _cloudSaveQueue=_cloudSaveQueue.catch(()=>{}).then(async()=>{
+    try{
+      if(!names.length) throw new Error('Не указаны разделы для сохранения');
+      await ownerRequest('saveOwnerSections',{sections});
+    }catch(e){
+      console.warn('Ошибка сохранения в облако',e);
+    }
+  });
+  return _cloudSaveQueue;
+}
+
+function cloudRestore(){
+  const ownerData={
+    months:JSON.parse(JSON.stringify(store.months)),
+    current:store.current,
+    trn:JSON.parse(JSON.stringify(store.trn||{})),
+    salaries:JSON.parse(JSON.stringify(store.salaries||{})),
+    notes:JSON.parse(JSON.stringify(store.notes||{})),
+    goods_manual:JSON.parse(JSON.stringify(store.goods_manual||{})),
+    cohorts:JSON.parse(JSON.stringify(store.cohorts||{})),
+    adSpend:JSON.parse(JSON.stringify(store.adSpend||{})),
+    sourceMasterShare:store.sourceMasterShare===undefined?40:Number(store.sourceMasterShare)
+  };
+  _cloudSaveQueue=_cloudSaveQueue.catch(()=>{}).then(()=>ownerRequest('restoreOwnerData',{ownerData}));
+  return _cloudSaveQueue;
 }
 </script>
 <style>
@@ -594,64 +623,40 @@ header{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 24px;
 
 <div id="pinScreen">
   <div class="pin-logo">BRIXTON<span>.</span></div>
-  <div class="pin-subtitle">Введите код доступа</div>
-  <div class="pin-dots">
-    <div class="pin-dot" id="d0"></div>
-    <div class="pin-dot" id="d1"></div>
-    <div class="pin-dot" id="d2"></div>
-    <div class="pin-dot" id="d3"></div>
-  </div>
+  <div class="pin-subtitle">Введите код владельца</div>
+  <input id="ownerTokenInput" type="password" autocomplete="current-password" style="width:240px;background:var(--surf);border:1px solid var(--brd);border-radius:10px;color:var(--txt);font:600 18px 'Mulish';padding:12px 14px;text-align:center;outline:none">
   <div class="pin-error" id="pinError"></div>
-  <div class="pin-pad">
-    <button class="pin-btn" onclick="pinPress('1')">1</button>
-    <button class="pin-btn" onclick="pinPress('2')">2</button>
-    <button class="pin-btn" onclick="pinPress('3')">3</button>
-    <button class="pin-btn" onclick="pinPress('4')">4</button>
-    <button class="pin-btn" onclick="pinPress('5')">5</button>
-    <button class="pin-btn" onclick="pinPress('6')">6</button>
-    <button class="pin-btn" onclick="pinPress('7')">7</button>
-    <button class="pin-btn" onclick="pinPress('8')">8</button>
-    <button class="pin-btn" onclick="pinPress('9')">9</button>
-    <button class="pin-btn" style="font-size:16px" onclick="pinDel()">⌫</button>
-    <button class="pin-btn" onclick="pinPress('0')">0</button>
-    <div></div>
-  </div>
+  <button class="pin-btn" id="ownerLoginBtn" onclick="ownerLogin()" style="width:240px;margin-top:12px;font-size:15px">Войти</button>
 </div>
 
 <script>
-const _PIN='1234';
-let _pinVal='';
-function pinPress(d){
-  if(_pinVal.length>=4)return;
-  _pinVal+=d;
-  document.getElementById('d'+(_pinVal.length-1)).classList.add('filled');
-  if(_pinVal.length===4){
-    if(_pinVal===_PIN){
-      document.getElementById('pinScreen').classList.add('hidden');
-      sessionStorage.setItem('brixton_pin','ok');
-    } else {
-      document.getElementById('pinError').textContent='Неверный код';
-      setTimeout(()=>{
-        _pinVal='';
-        [0,1,2,3].forEach(i=>document.getElementById('d'+i).classList.remove('filled'));
-        document.getElementById('pinError').textContent='';
-      },800);
-    }
+async function ownerLogin(savedToken){
+  const input=document.getElementById('ownerTokenInput');
+  const button=document.getElementById('ownerLoginBtn');
+  const error=document.getElementById('pinError');
+  const token=String(savedToken!==undefined?savedToken:input.value).trim();
+  if(!token){ error.textContent='Введите код владельца'; return false; }
+  sessionStorage.setItem(OWNER_TOKEN_KEY,token);
+  button.disabled=true;
+  error.textContent='Проверка…';
+  try{
+    const loaded=await cloudLoad();
+    if(!loaded) throw new Error('Не удалось загрузить данные');
+    document.getElementById('pinScreen').classList.add('hidden');
+    input.value='';
+    error.textContent='';
+    renderAll();
+    return true;
+  }catch(e){
+    sessionStorage.removeItem(OWNER_TOKEN_KEY);
+    error.textContent=e.message==='Доступ запрещён'?'Неверный код':'Ошибка загрузки данных';
+    return false;
+  }finally{
+    button.disabled=false;
   }
 }
-function pinDel(){
-  if(!_pinVal.length)return;
-  _pinVal=_pinVal.slice(0,-1);
-  document.getElementById('d'+_pinVal.length).classList.remove('filled');
-  document.getElementById('pinError').textContent='';
-}
-if(sessionStorage.getItem('brixton_pin')==='ok'){
-  document.getElementById('pinScreen').classList.add('hidden');
-}
-document.addEventListener('keydown',e=>{
-  if(document.getElementById('pinScreen').classList.contains('hidden'))return;
-  if(e.key>='0'&&e.key<='9')pinPress(e.key);
-  if(e.key==='Backspace')pinDel();
+document.getElementById('ownerTokenInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter') ownerLogin();
 });
 </script>
 
@@ -1558,9 +1563,9 @@ function loadStore(){
   try{const d=localStorage.getItem(KEY);if(d)return JSON.parse(d);}catch(e){}
   return{current:'may_2026',months:{may_2026:{label:'Май 2026',barbers:JSON.parse(JSON.stringify(DEFAULT_BARBERS))}}};
 }
-function saveStore(){
+function saveStore(sectionNames){
   try{localStorage.setItem('brixton_v4',JSON.stringify(store));}catch(e){}
-  cloudSave();
+  cloudSave(sectionNames);
 }
 
 let store=loadStore();if(!store.months||Object.keys(store.months).length<2){store={"months": {"may_2026": {"label": "Май 2026", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 53.7, "ret": 89.81, "rev": 324600, "vzv": 38.19, "base": 2500, "chek": 2647.2, "fill": 74.94, "name": "Виталий", "role": "Мастер-барбер", "since": "2022-05-01", "rookie": false, "otток": 19.12, "new_clients": 11, "left_clients": 26}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 68.75, "ret": 81.25, "rev": 279300, "vzv": 36.78, "base": 2500, "chek": 3053.68, "fill": 85.07, "name": "Валентина", "role": "Мастер-барбер", "since": "2022-12-01", "rookie": false, "otток": 9.89, "new_clients": 15, "left_clients": 9}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 37.62, "ret": 54.46, "rev": 268982, "vzv": 17.48, "base": 2300, "chek": 2511.65, "fill": 57.82, "name": "Наиль", "role": "ТОП-барбер", "since": "2025-07-28", "rookie": false, "otток": 15.32, "new_clients": 46, "left_clients": 19}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 40.51, "ret": 72.15, "rev": 223122, "vzv": 20.37, "base": 2300, "chek": 2531.15, "fill": 57.42, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "2023-12-01", "rookie": false, "otток": 25.83, "new_clients": 22, "left_clients": 31}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 37.36, "ret": 81.32, "rev": 203263, "vzv": 23.88, "base": 2100, "chek": 2278.56, "fill": 59.36, "name": "Арсений", "role": "Барбер", "since": "2024-12-05", "rookie": false, "otток": 23.26, "new_clients": 17, "left_clients": 30}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 44.59, "ret": 75.68, "rev": 166127, "vzv": 20.15, "base": 2100, "chek": 2136.59, "fill": 60.05, "name": "Никита", "role": "Барбер", "since": "2024-08-14", "rookie": false, "otток": 20.39, "new_clients": 18, "left_clients": 21}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 23.73, "ret": 50.85, "rev": 161468, "vzv": 13.68, "base": 2300, "chek": 2594.73, "fill": 55.55, "name": "Тагир", "role": "ТОП-барбер", "since": "2025-08-01", "rookie": false, "otток": 24.39, "new_clients": 29, "left_clients": 20}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 24.07, "ret": 53.7, "rev": 122396, "vzv": 14.01, "base": 1900, "chek": 1962.44, "fill": 56.33, "name": "Айгиза", "role": "Барбер", "since": "2025-03-23", "rookie": false, "otток": 18.84, "new_clients": 25, "left_clients": 13}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 11.67, "ret": 28.33, "rev": 135090, "vzv": 33.33, "base": 1900, "chek": 2083.18, "fill": 50.87, "name": "Яна", "role": "Барбер", "since": "2026-03-31", "rookie": true, "otток": 25.3, "new_clients": 43, "left_clients": 21}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 20.69, "ret": 18.97, "rev": 122103, "vzv": 25, "base": 1900, "chek": 2105.22, "fill": 41.49, "name": "Сергей", "role": "Барбер", "since": "2026-03-30", "rookie": true, "otток": 20.78, "new_clients": 47, "left_clients": 16}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 5980, "vzv": 0, "base": 1000, "chek": 460, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "2026-06-01", "rookie": true, "otток": 0, "new_clients": 13, "left_clients": 0}]}, "m_1780843645775": {"label": "Март 2026", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 57.26, "ret": 88.03, "rev": 356840.49, "vzv": 37.22, "base": 2500, "chek": 2652.09, "fill": 75.83, "name": "Виталий", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 69.14, "ret": 87.65, "rev": 316550, "vzv": 40.34, "base": 2500, "chek": 2905.13, "fill": 82.86, "name": "Валентина", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 46.38, "ret": 71.01, "rev": 180204.75, "vzv": 15.56, "base": 2300, "chek": 2529.79, "fill": 54.74, "name": "Наиль", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 48.1, "ret": 79.75, "rev": 227138, "vzv": 21.01, "base": 2300, "chek": 2622.15, "fill": 65.92, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 41.57, "ret": 83.15, "rev": 181996, "vzv": 22.98, "base": 2033, "chek": 1920.79, "fill": 55.64, "name": "Арсений", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 46.58, "ret": 87.67, "rev": 167396, "vzv": 20.32, "base": 2100, "chek": 2241.31, "fill": 57.99, "name": "Никита", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 34.09, "ret": 47.73, "rev": 120362, "vzv": 9.81, "base": 2300, "chek": 2740.48, "fill": 47.14, "name": "Тагир", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 31.91, "ret": 55.32, "rev": 95319, "vzv": 13, "base": 1900, "chek": 1798.47, "fill": 45.14, "name": "Айгиза", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 0, "ret": 0, "rev": 0, "vzv": 20, "base": 1900, "chek": 1900, "fill": 43.33, "name": "Яна", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 33.33, "ret": 0, "rev": 16742, "vzv": 0, "base": 1900, "chek": 2315.78, "fill": 19.09, "name": "Сергей", "role": "Барбер", "since": "", "rookie": true, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1000, "chek": 1000, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}]}, "m_1780843917332": {"label": "Апрель 2026", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 52.87, "ret": 89.66, "rev": 248000, "vzv": 28.3, "base": 2500, "chek": 2717.89, "fill": 62.03, "name": "Виталий", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 72.31, "ret": 83.08, "rev": 218500, "vzv": 29.82, "base": 2500, "chek": 2875, "fill": 85.53, "name": "Валентина", "role": "Мастер-барбер", "since": "2022-05-01", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 41.89, "ret": 71.62, "rev": 190533, "vzv": 16.16, "base": 2300, "chek": 2442.19, "fill": 43.75, "name": "Наиль", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 39.76, "ret": 71.08, "rev": 229536.02, "vzv": 21.84, "base": 2300, "chek": 2688.18, "fill": 66.37, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 45.65, "ret": 73.91, "rev": 202122, "vzv": 22.3, "base": 2100, "chek": 2065.22, "fill": 58.05, "name": "Арсений", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 38.46, "ret": 79.49, "rev": 191858, "vzv": 21.63, "base": 2100, "chek": 2243.2, "fill": 62.21, "name": "Никита", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 24.53, "ret": 50.94, "rev": 143654, "vzv": 12.22, "base": 2300, "chek": 2534.81, "fill": 45.01, "name": "Тагир", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 28.57, "ret": 52.38, "rev": 101820, "vzv": 10.73, "base": 1900, "chek": 2116.73, "fill": 62.29, "name": "Айгиза", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 19.57, "ret": 8.7, "rev": 98343, "vzv": 20, "base": 1900, "chek": 2069.65, "fill": 43.51, "name": "Яна", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 24.39, "ret": 7.32, "rev": 83941, "vzv": 19.8, "base": 1900, "chek": 2150.98, "fill": 26.47, "name": "Сергей", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1000, "chek": 1000, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}]}, "m_1781069383608": {"label": "Декабрь 2025", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 67.8, "ret": 94.07, "rev": 401460.52, "vzv": 38.41, "base": 2500, "chek": 2869.38, "fill": 81.44, "name": "Виталий", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 6.3, "new_clients": 7, "left_clients": 8}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 65.56, "ret": 87.78, "rev": 300725, "vzv": 35.45, "base": 2500, "chek": 2868.08, "fill": 84.33, "name": "Валентина", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 8.16, "new_clients": 11, "left_clients": 8}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 53.06, "ret": 65.31, "rev": 283835, "vzv": 29.49, "base": 2300, "chek": 2547.21, "fill": 55.93, "name": "Наиль", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 15.25, "new_clients": 34, "left_clients": 18}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 54.29, "ret": 82.86, "rev": 307050, "vzv": 28.87, "base": 2300, "chek": 2727.31, "fill": 78.2, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 11.76, "new_clients": 18, "left_clients": 14}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 55.1, "ret": 78.57, "rev": 211415, "vzv": 22.29, "base": 2100, "chek": 2061.57, "fill": 67.4, "name": "Арсений", "role": "Барбер", "since": "", "rookie": false, "otток": 7.34, "new_clients": 21, "left_clients": 8}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 64.44, "ret": 80, "rev": 241966.5, "vzv": 20.7, "base": 1900, "chek": 2385.99, "fill": 72.79, "name": "Никита", "role": "Барбер", "since": "", "rookie": false, "otток": 16.67, "new_clients": 18, "left_clients": 18}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 48.08, "ret": 50, "rev": 149625, "vzv": 17.45, "base": 2300, "chek": 2757.59, "fill": 51.95, "name": "Тагир", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 5.26, "new_clients": 26, "left_clients": 3}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 38.1, "ret": 47.62, "rev": 72760, "vzv": 13.7, "base": 1600, "chek": 1701.4, "fill": 41.77, "name": "Айгиза", "role": "Барбер", "since": "", "rookie": false, "otток": 20.37, "new_clients": 22, "left_clients": 11}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Яна", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Сергей", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1000, "chek": 1000, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}]}, "m_1781069423256": {"label": "Январь 2026", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 63.16, "ret": 92.63, "rev": 279270, "vzv": 30.11, "base": 2500, "chek": 2848.25, "fill": 75.43, "name": "Виталий", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 6.6, "new_clients": 7, "left_clients": 7}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 51.43, "ret": 88.57, "rev": 202283, "vzv": 28.84, "base": 2500, "chek": 2697.11, "fill": 85.94, "name": "Валентина", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 13.41, "new_clients": 8, "left_clients": 11}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 46.25, "ret": 58.75, "rev": 210450, "vzv": 18.88, "base": 2300, "chek": 2531.55, "fill": 51.66, "name": "Наиль", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 16.16, "new_clients": 33, "left_clients": 16}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 63.33, "ret": 80, "rev": 162720, "vzv": 16.72, "base": 2300, "chek": 2612.22, "fill": 71.77, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 21.69, "new_clients": 12, "left_clients": 18}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 66.18, "ret": 77.94, "rev": 142420, "vzv": 15.29, "base": 2100, "chek": 2093.24, "fill": 47.03, "name": "Арсений", "role": "Барбер", "since": "", "rookie": false, "otток": 14.63, "new_clients": 15, "left_clients": 12}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 52, "ret": 73.33, "rev": 172110, "vzv": 16.21, "base": 1900, "chek": 2108.66, "fill": 61.91, "name": "Никита", "role": "Барбер", "since": "", "rookie": false, "otток": 17.78, "new_clients": 20, "left_clients": 16}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 43.59, "ret": 51.28, "rev": 110624.08, "vzv": 11.43, "base": 2300, "chek": 2426.61, "fill": 45.94, "name": "Тагир", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 27.59, "new_clients": 19, "left_clients": 16}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 57.14, "ret": 42.86, "rev": 91140, "vzv": 10.71, "base": 1900, "chek": 1947.66, "fill": 40.93, "name": "Айгиза", "role": "Барбер", "since": "", "rookie": false, "otток": 27.12, "new_clients": 24, "left_clients": 16}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Яна", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Сергей", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1000, "chek": 1000, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}]}, "m_1781069448979": {"label": "Февраль 2026", "barbers": [{"id": 1, "cur": "МАСТЕР", "loc": "Менделеева", "opz": 67.71, "ret": 91.67, "rev": 286124.71, "vzv": 31.62, "base": 2500, "chek": 2748.35, "fill": 73.56, "name": "Виталий", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 10.09, "new_clients": 8, "left_clients": 11}, {"id": 2, "cur": "МАСТЕР", "loc": "Энтузиастов", "opz": 1.83, "ret": 100, "rev": 29600, "vzv": 5.91, "base": 2500, "chek": 2620.83, "fill": 89.91, "name": "Валентина", "role": "Мастер-барбер", "since": "", "rookie": false, "otток": 33.33, "new_clients": 0, "left_clients": 7}, {"id": 3, "cur": "ТОП", "loc": "Менделеева", "opz": 32.29, "ret": 65.63, "rev": 249515.5, "vzv": 22.34, "base": 2300, "chek": 2445.78, "fill": 56.32, "name": "Наиль", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 23.02, "new_clients": 33, "left_clients": 29}, {"id": 4, "cur": "ТОП", "loc": "Энтузиастов", "opz": 53.16, "ret": 83.54, "rev": 242501, "vzv": 23.02, "base": 2300, "chek": 2776.98, "fill": 64.61, "name": "Дмитрий М.", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 8.05, "new_clients": 13, "left_clients": 7}, {"id": 5, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 45.92, "ret": 68.37, "rev": 198500, "vzv": 20.56, "base": 2100, "chek": 2052.97, "fill": 61.34, "name": "Арсений", "role": "Барбер", "since": "", "rookie": false, "otток": 9.26, "new_clients": 31, "left_clients": 10}, {"id": 6, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 46.67, "ret": 71.11, "rev": 217862, "vzv": 19.62, "base": 2100, "chek": 2235.9, "fill": 66.54, "name": "Никита", "role": "Барбер", "since": "", "rookie": false, "otток": 14.15, "new_clients": 26, "left_clients": 15}, {"id": 7, "cur": "ТОП", "loc": "Энтузиастов", "opz": 16.13, "ret": 35.48, "rev": 76640, "vzv": 5.67, "base": 2300, "chek": 2448.13, "fill": 31.77, "name": "Тагир", "role": "ТОП-барбер", "since": "", "rookie": false, "otток": 28.26, "new_clients": 20, "left_clients": 13}, {"id": 8, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 25.64, "ret": 30.77, "rev": 88002.5, "vzv": 6.45, "base": 1900, "chek": 2046.57, "fill": 49.02, "name": "Айгиза", "role": "Барбер", "since": "", "rookie": false, "otток": 25.45, "new_clients": 27, "left_clients": 14}, {"id": 9, "cur": "БАРБЕР", "loc": "Энтузиастов", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Яна", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 10, "cur": "БАРБЕР", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1900, "chek": 1900, "fill": 0, "name": "Сергей", "role": "Барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}, {"id": 11, "cur": "МЛАДШИЙ", "loc": "Менделеева", "opz": 0, "ret": 0, "rev": 0, "vzv": 0, "base": 1000, "chek": 1000, "fill": 0, "name": "Марина", "role": "Младший барбер", "since": "", "rookie": false, "otток": 0, "new_clients": 0, "left_clients": 0}]}, "m_1781255902714": {"label": "Май 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Менделеева", "vzv": 32.36, "ret": 89.47, "chek": 2342.96, "fill": 87.17, "rev": 280727.14, "opz": 41.23, "otток": 5.79, "new_clients": 12, "left_clients": 7, "since": "2022-05-01", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 30.1, "ret": 79.01, "chek": 2484.3, "fill": 88.06, "rev": 233345.27, "opz": 66.67, "otток": 8.89, "new_clients": 17, "left_clients": 8, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 2300, "fill": 0, "rev": 0, "opz": 0}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 1900, "loc": "Энтузиастов", "vzv": 19.94, "ret": 71.59, "chek": 2202.77, "fill": 71.45, "rev": 196807.25, "opz": 39.77, "otток": 11.88, "new_clients": 25, "left_clients": 12, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 20.85, "ret": 62.07, "chek": 1778.1, "fill": 51.26, "rev": 162719.17, "opz": 32.18, "otток": 14.95, "new_clients": 33, "left_clients": 16, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 14.85, "ret": 63.1, "chek": 1911.22, "fill": 61.6, "rev": 168044.41, "opz": 50, "otток": 22.02, "new_clients": 31, "left_clients": 24, "since": "2024-08-14", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 2300, "fill": 0, "rev": 0, "opz": 0}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 500, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 432.35, "fill": 42.65, "rev": 7350, "opz": 31.25, "otток": 0, "new_clients": 16, "left_clients": 0, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781255974334": {"label": "Июнь 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Менделеева", "vzv": 35.91, "ret": 86.92, "chek": 2183.78, "fill": 87.28, "rev": 302880.14, "opz": 40, "otток": 5.19, "new_clients": 17, "left_clients": 7, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 29.95, "ret": 67.03, "chek": 2163.02, "fill": 87.95, "rev": 202404.15, "opz": 58.24, "otток": 11.43, "new_clients": 30, "left_clients": 12, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 2300, "fill": 0, "rev": 0, "opz": 0}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 1900, "loc": "Энтузиастов", "vzv": 18.65, "ret": 75.31, "chek": 1937.6, "fill": 81.38, "rev": 176496.94, "opz": 55.56, "otток": 17.31, "new_clients": 20, "left_clients": 18, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 19.86, "ret": 57.43, "chek": 1915.18, "fill": 64.53, "rev": 181538.71, "opz": 22.77, "otток": 18.75, "new_clients": 43, "left_clients": 24, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 13.52, "ret": 48.04, "chek": 1917.88, "fill": 67.3, "rev": 191390.03, "opz": 52.94, "otток": 19.84, "new_clients": 53, "left_clients": 25, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 2300, "fill": 0, "rev": 0, "opz": 0}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 500, "loc": "Энтузиастов", "vzv": 37.5, "ret": 31.58, "chek": 435.71, "fill": 65.51, "rev": 9150, "opz": 42.11, "otток": 20.83, "new_clients": 13, "left_clients": 5, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781256022424": {"label": "Август 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2300, "loc": "Менделеева", "vzv": 36.24, "ret": 90.4, "chek": 2371.87, "fill": 82.97, "rev": 330599.85, "opz": 52.8, "otток": 5.26, "new_clients": 12, "left_clients": 7, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Энтузиастов", "vzv": 33.33, "ret": 87.21, "chek": 2187.32, "fill": 81.27, "rev": 210444.32, "opz": 55.81, "otток": 9.28, "new_clients": 11, "left_clients": 9, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 2110.11, "fill": 50.73, "rev": 208970.69, "opz": 24.47, "otток": 0, "new_clients": 94, "left_clients": 0, "since": "", "rookie": false}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 2000, "loc": "Энтузиастов", "vzv": 23.49, "ret": 78.79, "chek": 2085.95, "fill": 68.19, "rev": 230504.74, "opz": 46.46, "otток": 18.25, "new_clients": 21, "left_clients": 23, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 16.25, "ret": 65.17, "chek": 1672.8, "fill": 62.24, "rev": 160080.12, "opz": 51.69, "otток": 20.35, "new_clients": 31, "left_clients": 23, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 15.76, "ret": 66.67, "chek": 1650.17, "fill": 68.1, "rev": 169517.77, "opz": 65.52, "otток": 22.81, "new_clients": 29, "left_clients": 26, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Энтузиастов", "vzv": 25, "ret": 11.54, "chek": 2155.58, "fill": 44.42, "rev": 115907, "opz": 11.54, "otток": 15.87, "new_clients": 46, "left_clients": 10, "since": "", "rookie": false}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 1000, "loc": "Энтузиастов", "vzv": 14.29, "ret": 22.58, "chek": 753, "fill": 52.66, "rev": 26355, "opz": 35.48, "otток": 24.44, "new_clients": 24, "left_clients": 11, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781256070707": {"label": "Июль 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2300, "loc": "Менделеева", "vzv": 33.9, "ret": 83.74, "chek": 2340.18, "fill": 85.25, "rev": 328055.81, "opz": 58.54, "otток": 9.93, "new_clients": 20, "left_clients": 14, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Энтузиастов", "vzv": 26.67, "ret": 74.03, "chek": 2099.99, "fill": 86.4, "rev": 168799.35, "opz": 79.22, "otток": 11.24, "new_clients": 20, "left_clients": 10, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 2300, "fill": 70.54, "rev": 0, "opz": 0, "since": "", "rookie": false}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 2000, "loc": "Энтузиастов", "vzv": 23.75, "ret": 64.41, "chek": 2206.26, "fill": 83.34, "rev": 278757.93, "opz": 41.53, "otток": 8.53, "new_clients": 42, "left_clients": 11, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 18.21, "ret": 60.4, "chek": 1770.11, "fill": 66.89, "rev": 179141.64, "opz": 35.64, "otток": 18.94, "new_clients": 40, "left_clients": 25, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 17.98, "ret": 68.04, "chek": 1797.61, "fill": 71.98, "rev": 184389.24, "opz": 44.33, "otток": 21.49, "new_clients": 31, "left_clients": 26, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1507.2, "fill": 46.53, "rev": 37680, "opz": 37.5, "otток": 0, "new_clients": 24, "left_clients": 0}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 1000, "loc": "Энтузиастов", "vzv": 27.59, "ret": 28.57, "chek": 795, "fill": 59.48, "rev": 23850, "opz": 28.57, "otток": 25, "new_clients": 20, "left_clients": 10, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781256129191": {"label": "Сентябрь 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2300, "loc": "Менделеева", "vzv": 32.89, "ret": 90.99, "chek": 2470.44, "fill": 80.03, "rev": 297186.59, "opz": 56.76, "otток": 11.19, "new_clients": 10, "left_clients": 15, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Энтузиастов", "vzv": 28.5, "ret": 80.52, "chek": 2509.64, "fill": 86.1, "rev": 203038.34, "opz": 76.62, "otток": 8.24, "new_clients": 15, "left_clients": 7, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Менделеева", "vzv": 25.53, "ret": 27.59, "chek": 2126.35, "fill": 46.76, "rev": 190580.27, "opz": 33.33, "otток": 21.85, "new_clients": 63, "left_clients": 26, "since": "", "rookie": false}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 2000, "loc": "Энтузиастов", "vzv": 21.82, "ret": 80.9, "chek": 2424.12, "fill": 71.82, "rev": 224645.7, "opz": 58.43, "otток": 8.91, "new_clients": 17, "left_clients": 9, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 17.13, "ret": 70.45, "chek": 1716.54, "fill": 58.2, "rev": 149151.41, "opz": 43.18, "otток": 15.09, "new_clients": 26, "left_clients": 16, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 16.67, "ret": 66.29, "chek": 1764.07, "fill": 62.24, "rev": 160750.29, "opz": 57.3, "otток": 18.18, "new_clients": 30, "left_clients": 20, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Энтузиастов", "vzv": 8.7, "ret": 12, "chek": 2179, "fill": 47.36, "rev": 104729.07, "opz": 32, "otток": 26.76, "new_clients": 44, "left_clients": 19, "since": "", "rookie": false}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 1400, "loc": "Энтузиастов", "vzv": 19.18, "ret": 35, "chek": 975.49, "fill": 43.99, "rev": 39995, "opz": 20, "otток": 15.69, "new_clients": 26, "left_clients": 8, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781256144954": {"label": "Октябрь 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2300, "loc": "Менделеева", "vzv": 34.15, "ret": 86.32, "chek": 2429.3, "fill": 84.12, "rev": 310225.53, "opz": 68.38, "otток": 6.4, "new_clients": 16, "left_clients": 8, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2100, "loc": "Энтузиастов", "vzv": 30.18, "ret": 90.67, "chek": 2355.7, "fill": 91.22, "rev": 220353.24, "opz": 82.67, "otток": 9.52, "new_clients": 7, "left_clients": 8, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Менделеева", "vzv": 30.57, "ret": 62.34, "chek": 2228.36, "fill": 54.03, "rev": 178577, "opz": 44.16, "otток": 18.18, "new_clients": 29, "left_clients": 18, "since": "", "rookie": false}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 2000, "loc": "Энтузиастов", "vzv": 25.47, "ret": 79.41, "chek": 2254.78, "fill": 75.47, "rev": 254809.16, "opz": 63.73, "otток": 11.11, "new_clients": 21, "left_clients": 13, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Менделеева", "vzv": 15.53, "ret": 65.93, "chek": 1811.17, "fill": 62.27, "rev": 168966.76, "opz": 57.14, "otток": 15.45, "new_clients": 31, "left_clients": 17, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1700, "loc": "Энтузиастов", "vzv": 16.67, "ret": 68.6, "chek": 1790.79, "fill": 65.92, "rev": 184242.5, "opz": 62.79, "otток": 18.92, "new_clients": 27, "left_clients": 21, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2100, "loc": "Энтузиастов", "vzv": 15.93, "ret": 47.37, "chek": 2400.36, "fill": 40.39, "rev": 97565, "opz": 50, "otток": 24.56, "new_clients": 20, "left_clients": 14, "since": "", "rookie": false}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 1400, "loc": "Энтузиастов", "vzv": 10.1, "ret": 29.41, "chek": 1403.24, "fill": 47.03, "rev": 51920, "opz": 44.12, "otток": 44.44, "new_clients": 24, "left_clients": 28, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}, "m_1781256168576": {"label": "Ноябрь 2025", "barbers": [{"id": 1, "name": "Виталий", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2500, "loc": "Менделеева", "vzv": 34.89, "ret": 90.83, "chek": 2530.93, "fill": 71.11, "rev": 304515.77, "opz": 76.15, "otток": 11.29, "new_clients": 10, "left_clients": 14, "since": "", "rookie": false}, {"id": 2, "name": "Валентина", "role": "Мастер-барбер", "cur": "МАСТЕР", "base": 2500, "loc": "Энтузиастов", "vzv": 28.57, "ret": 86.3, "chek": 2549.24, "fill": 77.51, "rev": 214985, "opz": 78.08, "otток": 7.41, "new_clients": 10, "left_clients": 6, "since": "", "rookie": false}, {"id": 3, "name": "Наиль", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Менделеева", "vzv": 23.91, "ret": 56.41, "chek": 2510.39, "fill": 44.99, "rev": 212335, "opz": 61.54, "otток": 16.49, "new_clients": 34, "left_clients": 16, "since": "", "rookie": false}, {"id": 4, "name": "Дмитрий М.", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Энтузиастов", "vzv": 22.61, "ret": 83.72, "chek": 2385.4, "fill": 71.39, "rev": 234304.14, "opz": 69.77, "otток": 13, "new_clients": 14, "left_clients": 13, "since": "", "rookie": false}, {"id": 5, "name": "Арсений", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 18.61, "ret": 83.75, "chek": 1926.95, "fill": 52.99, "rev": 158395, "opz": 57.5, "otток": 14.43, "new_clients": 13, "left_clients": 14, "since": "", "rookie": false}, {"id": 6, "name": "Никита", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 17.28, "ret": 75.61, "chek": 1985.21, "fill": 62.37, "rev": 180759.85, "opz": 68.29, "otток": 15.31, "new_clients": 20, "left_clients": 15, "since": "", "rookie": false}, {"id": 7, "name": "Тагир", "role": "ТОП-барбер", "cur": "ТОП", "base": 2300, "loc": "Энтузиастов", "vzv": 9.77, "ret": 44.83, "chek": 2353.44, "fill": 28.8, "rev": 74310, "opz": 55.17, "otток": 28.57, "new_clients": 16, "left_clients": 12, "since": "", "rookie": false}, {"id": 8, "name": "Айгиза", "role": "Барбер", "cur": "БАРБЕР", "base": 1600, "loc": "Энтузиастов", "vzv": 13.01, "ret": 41.03, "chek": 1655.38, "fill": 44.29, "rev": 66215, "opz": 53.85, "otток": 22, "new_clients": 23, "left_clients": 11, "since": "", "rookie": false}, {"id": 9, "name": "Яна", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Энтузиастов", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 10, "name": "Сергей", "role": "Барбер", "cur": "БАРБЕР", "base": 1900, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1900, "fill": 0, "rev": 0, "opz": 0}, {"id": 11, "name": "Марина", "role": "Младший барбер", "cur": "МЛАДШИЙ", "base": 1000, "loc": "Менделеева", "vzv": 0, "ret": 0, "chek": 1000, "fill": 0, "rev": 0, "opz": 0}]}}, "current": "m_1780843917332"};}
@@ -1593,7 +1598,7 @@ function switchMonth(key){
   const yr=(key||'').split('_')[1];
   if(yr) _expandedYears.add(yr);
   store.current=key;
-  saveStore();
+  saveStore(['current']);
   renderAll();
 }
 
@@ -1616,7 +1621,7 @@ function confirmNewMonth(){
   }));
   store.months[key]={label,barbers:newBarbers};
   store.current=key;
-  saveStore();
+  saveStore(['months','current']);
   closeModal();
   renderMonthSel();
   renderAll();
@@ -1643,13 +1648,13 @@ function confirmAddBarber(){
     rookie:document.getElementById('ab_rookie').checked,
     vzv:0,ret:0,chek:base,fill:0,rev:0,opz:0
   });
-  saveStore();closeModal();renderAll();
+  saveStore(['months']);closeModal();renderAll();
 }
 
 function deleteBarber(id){
   if(!confirm('Удалить барбера?'))return;
   store.months[store.current].barbers=barbers().filter(b=>b.id!==id);
-  saveStore();
+  saveStore(['months']);
   closeModal();
   renderAll();
 }
@@ -1661,7 +1666,7 @@ function deleteMonth(){
   if(!confirm('Удалить месяц «'+label+'»? Все данные этого месяца будут потеряны.'))return;
   delete store.months[store.current];
   store.current=Object.keys(store.months)[0];
-  saveStore();
+  saveStore(['months','current']);
   renderAll();
 }
 
@@ -1734,7 +1739,7 @@ function renameMonth(){
   const newLabel=prompt('Переименовать месяц:', cur.label);
   if(!newLabel||!newLabel.trim()||newLabel.trim()===cur.label)return;
   cur.label=newLabel.trim();
-  saveStore();
+  saveStore(['months']);
   renderAll();
 }
 
@@ -3281,12 +3286,12 @@ function setGoodsMasterFilter(val,btn){
 const TRN_BASE_PRICE_DEFAULT=2180;
 // Хранилища
 function trnGetBasePrice(){ return (store.trn && store.trn.basePrice) || TRN_BASE_PRICE_DEFAULT; }
-function trnSetBasePrice(v){ if(!store.trn)store.trn={}; store.trn.basePrice=v; saveStore(); }
+function trnSetBasePrice(v){ if(!store.trn)store.trn={}; store.trn.basePrice=v; saveStore(['trn']); }
 function trnGetPrice(master){ // персональная цена мастера
   if(store.trn && store.trn.prices && store.trn.prices[master]!=null) return store.trn.prices[master];
   return null;
 }
-function trnSetPrice(master,v){ if(!store.trn)store.trn={}; if(!store.trn.prices)store.trn.prices={}; if(v==null||v==='')delete store.trn.prices[master]; else store.trn.prices[master]=v; saveStore(); }
+function trnSetPrice(master,v){ if(!store.trn)store.trn={}; if(!store.trn.prices)store.trn.prices={}; if(v==null||v==='')delete store.trn.prices[master]; else store.trn.prices[master]=v; saveStore(['trn']); }
 function trnGetManual(master,mkey,field){ // отзывы/опоздания/комментарии
   try{ return store.trn.manual[master][mkey][field]; }catch(e){ return null; }
 }
@@ -3296,7 +3301,7 @@ function trnSetManual(master,mkey,field,v){
   if(!store.trn.manual[master][mkey])store.trn.manual[master][mkey]={};
   if(v==null||v==='')delete store.trn.manual[master][mkey][field];
   else store.trn.manual[master][mkey][field]=v;
-  saveStore();
+  saveStore(['trn']);
 }
 // Пропуск месяца в базе роста (отпуск/больничный): trn.skipMonth[master][mkey]=true
 function trnGetSkip(master,mkey){ try{ return !!store.trn.skipMonth[master][mkey]; }catch(e){ return false; } }
@@ -3304,7 +3309,7 @@ function trnSetSkip(master,mkey,v){
   if(!store.trn)store.trn={}; if(!store.trn.skipMonth)store.trn.skipMonth={};
   if(!store.trn.skipMonth[master])store.trn.skipMonth[master]={};
   if(!v)delete store.trn.skipMonth[master][mkey]; else store.trn.skipMonth[master][mkey]=true;
-  saveStore();
+  saveStore(['trn']);
 }
 // Отключение лидерства по метрике (повышение цены): trn.noLead[master][mkey][field]=true
 function trnGetNoLead(master,mkey,field){ try{ return !!store.trn.noLead[master][mkey][field]; }catch(e){ return false; } }
@@ -3313,7 +3318,7 @@ function trnSetNoLead(master,mkey,field,v){
   if(!store.trn.noLead[master])store.trn.noLead[master]={};
   if(!store.trn.noLead[master][mkey])store.trn.noLead[master][mkey]={};
   if(!v)delete store.trn.noLead[master][mkey][field]; else store.trn.noLead[master][mkey][field]=true;
-  saveStore();
+  saveStore(['trn']);
 }
 // Фото барберов для пьедестала (base64, сжатые)
 function trnGetPhoto(master){ try{ return store.trn.photos[master]||null; }catch(e){ return null; } }
@@ -3324,7 +3329,7 @@ function trnSetPhoto(master, dataUrl){
   // Очередь предотвращает гонку при быстрой загрузке нескольких фото.
   window._photoSaveQueue=(window._photoSaveQueue||Promise.resolve()).then(async()=>{
     try{ localStorage.setItem('brixton_v4',JSON.stringify(store)); }catch(e){ /* фото большие — localStorage может переполниться, это ок, облако основное */ }
-    await cloudSave();
+    await cloudSave(['trn']);
     renderTournament();
   });
 }
@@ -4075,7 +4080,7 @@ function setSalary(masterName, mkey, val){
   if(!store.salaries[masterName]) store.salaries[masterName]={};
   if(val===null||val===''||isNaN(val)) delete store.salaries[masterName][mkey];
   else store.salaries[masterName][mkey]=val;
-  saveStore();
+  saveStore(['salaries']);
 }
 function getNote(masterName, mkey){
   if(!store.notes||!store.notes[masterName]) return '';
@@ -4086,7 +4091,7 @@ function setNote(masterName, mkey, val){
   if(!store.notes[masterName]) store.notes[masterName]={};
   if(!val) delete store.notes[masterName][mkey];
   else store.notes[masterName][mkey]=val;
-  saveStore();
+  saveStore(['notes']);
 }
 function getGoods(masterName, mkey){
   if(!store.goods_manual) return null;
@@ -4099,7 +4104,7 @@ function setGoods(masterName, mkey, val){
   if(!store.goods_manual[masterName]) store.goods_manual[masterName]={};
   if(val===null||val===''||isNaN(val)) delete store.goods_manual[masterName][mkey];
   else store.goods_manual[masterName][mkey]=val;
-  saveStore();
+  saveStore(['goods_manual']);
 }
 
 // Список показателей карточки: [название, функция расчёта(b, salary), формат]
@@ -5860,7 +5865,7 @@ function saveBarber(id){
   b.cur=document.getElementById('e_cur').value;
   b.since=document.getElementById('e_since').value||'';
   b.rookie=document.getElementById('e_rookie').checked;
-  saveStore();closeModal();renderAll();
+  saveStore(['months']);closeModal();renderAll();
 }
 
 // ════════════════════════════════════════════════
@@ -5912,13 +5917,13 @@ function saveInput(){
     const b=barbers().find(x=>x.id===id);
     if(b){b[f]=f==='cur'?inp.value:(parseFloat(inp.value)||0);}
   });
-  saveStore();renderAll();alert('Данные сохранены ✓');
+  saveStore(['months']);renderAll();alert('Данные сохранены ✓');
 }
 
 function resetMonth(){
   if(!confirm('Обнулить метрики всех барберов в текущем месяце?'))return;
   barbers().forEach(b=>{b.vzv=0;b.ret=0;b.chek=b.base;b.fill=0;b.rev=0;b.opz=0;});
-  saveStore();renderAll();
+  saveStore(['months']);renderAll();
 }
 
 // ════════════════════════════════════════════════
@@ -6117,7 +6122,7 @@ function importYclients(input){
         updated++;
       });
 
-      saveStore();renderAll();
+      saveStore(['months']);renderAll();
 
       let msg=`✅ Импорт завершён!\n\nОбновлено барберов: ${updated}`;
       if(notFound.length) msg+=`\n\n⚠ Не найдены в системе (${notFound.length}):\n${notFound.join(', ')}\n\nДобавь их через «＋ Барбер» или проверь написание имён.`;
@@ -6185,7 +6190,7 @@ function importFill(input){
         updated++;
       });
 
-      saveStore();renderAll();
+      saveStore(['months']);renderAll();
 
       let msg=`✅ Загрузка расписания обновлена!\n\nОбновлено барберов: ${updated}`;
       if(notFound.length) msg+=`\n\n⚠ Не найдены в системе:\n${notFound.join(', ')}`;
@@ -6718,7 +6723,7 @@ function importData(input){
   if(!file)return;
   input.value='';
   const reader=new FileReader();
-  reader.onload=function(e){
+  reader.onload=async function(e){
     try{
       const data=JSON.parse(e.target.result);
       if(!data.months||!data.current){
@@ -6752,7 +6757,8 @@ function importData(input){
         if(b.chek_for_score===undefined) b.chek_for_score=b.chek||0;
         });
       });
-      saveStore();
+      try{localStorage.setItem('brixton_v4',JSON.stringify(store));}catch(storageErr){}
+      await cloudRestore();
       renderAll();
       alert(`✅ Данные восстановлены!\nМесяцев: ${Object.keys(store.months).length}`);
     }catch(err){
@@ -7667,10 +7673,11 @@ function renderAll(){
     if(k1&&k2&&k3&&new Set([k1,k2,k3]).size===3) renderQuarter();
   },100);
 }
-// При старте — сначала грузим из облака, потом рендерим
+// При старте проверяем сохранённый только на время сессии код владельца
 (async function init(){
-  await cloudLoad();
-  renderAll();
+  const savedToken=sessionStorage.getItem(OWNER_TOKEN_KEY);
+  if(savedToken) await ownerLogin(savedToken);
+  else document.getElementById('ownerTokenInput').focus();
 })();
 
 // Кнопка "Обновить сейчас" — открывает служебную ссылку Apps Script,
@@ -9040,7 +9047,7 @@ function srcMarginInput(inp){
   if(hint) hint.textContent='→ маржа '+srcMargin()+'% (для колонки «ROMI марж.»)';
   renderContent();
 }
-function srcMarginSave(){ try{ if(typeof cloudSave==='function') cloudSave(); localStorage.setItem('brixton_v4',JSON.stringify(store)); }catch(e){} }
+function srcMarginSave(){ try{ if(typeof cloudSave==='function') cloudSave(['sourceMasterShare']); localStorage.setItem('brixton_v4',JSON.stringify(store)); }catch(e){} }
 
 function srcSetBranch(b,btn){ srcBranch=b; srcMaster='Все'; document.querySelectorAll('#sources .bbtn').forEach(x=>x.classList.remove('active')); if(btn)btn.classList.add('active'); renderSources(); }
 function srcSetMaster(v){ srcMaster=v||'Все'; renderBudget(); renderContent(); }
@@ -9202,7 +9209,7 @@ function srcSaveBudget(){
     if(v>0) obj[inp.getAttribute('data-ch')]=v;
   });
   store.adSpend[key][srcBranch]=obj;
-  try{ if(typeof cloudSave==='function') cloudSave(); }catch(e){}
+  try{ if(typeof cloudSave==='function') cloudSave(['adSpend']); }catch(e){}
   try{ localStorage.setItem('brixton_v4', JSON.stringify(store)); }catch(e){}
   const b=document.getElementById('srcSaveBtn'); if(b){const t=b.textContent;b.textContent='✓ Сохранено в облако';setTimeout(()=>{b.textContent=t;},1600);}
   renderContent();
