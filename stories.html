@@ -306,9 +306,9 @@ async function refreshSlots(btn){
 async function loadData(){
   document.getElementById('status').textContent='Загрузка…';
   try{
-    const r=await fetch(SUPA_URL+'/rest/v1/brixton_store?id=eq.main&select=data',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
+    const r=await fetch(SUPA_URL+'/rest/v1/brixton_store?id=eq.main&select=freeSlots:data->freeSlots',{headers:{apikey:SUPA_KEY,Authorization:'Bearer '+SUPA_KEY}});
     const rows=await r.json();
-    FREE=rows&&rows[0]&&rows[0].data?rows[0].data.freeSlots:null;
+    FREE=rows&&rows[0]&&rows[0].freeSlots?rows[0].freeSlots:null;
     if(!FREE){document.getElementById('status').textContent='В Supabase нет freeSlots — запусти buildFreeSlots.';return;}
     const gen=FREE.generatedAt?new Date(FREE.generatedAt).toLocaleString('ru-RU'):'—';
     document.getElementById('status').textContent='Обновлено: '+gen+'  •  даты: '+(FREE.dates||[]).join(', ');
