@@ -4078,12 +4078,11 @@ function sendMasterReport() {
   var daysLeft = new Date(parts[0], parts[1], 0).getDate() - dayOfMonth; // дней до конца месяца
 
   // читаем цели из облака
-  var gr = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=data', {
+  var gr = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=goals:data->goals', {
     method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
   });
   var gdata = JSON.parse(gr.getContentText());
-  var store = (gdata && gdata[0] && gdata[0].data) ? gdata[0].data : {};
-  var goals = store.goals || { '694866': 450, '1076318': 450 };
+  var goals = (gdata && gdata[0] && gdata[0].goals) ? gdata[0].goals : { '694866': 450, '1076318': 450 };
 
   function isPair(title){ var t=(title||'').toLowerCase().replace(/\s/g,''); return t.indexOf('друг+друг')!==-1||t.indexOf('папа+сын')!==-1; }
   function isNew(c){ return c&&(c.is_new===true||c.is_new===1); }
