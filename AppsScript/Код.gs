@@ -3804,12 +3804,33 @@ function initShiftsRow() {
   Logger.log('initShiftsRow -> HTTP ' + res.getResponseCode() + ' ' + res.getContentText());
 }
 function getAdmins(branchId) {
-  var r = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=data', {
-    method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
-  });
-  var rows = JSON.parse(r.getContentText());
-  var d = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
-  return (d.admins && d.admins[branchId]) ? d.admins[branchId] : [];
+  var select = 'admins:data->admins->' + branchId;
+  var response = UrlFetchApp.fetch(
+    SUPABASE_URL +
+      '/rest/v1/brixton_store?id=eq.main&select=' +
+      encodeURIComponent(select),
+    {
+      method: 'get',
+      headers: {
+        apikey: getSupabaseServiceRole_(),
+        Authorization: 'Bearer ' + getSupabaseServiceRole_()
+      },
+      muteHttpExceptions: true
+    }
+  );
+  var responseCode = response.getResponseCode();
+  if (responseCode < 200 || responseCode >= 300) {
+    throw new Error(
+      'Ошибка загрузки из Supabase: ' +
+      responseCode +
+      ' — ' +
+      response.getContentText()
+    );
+  }
+  var rows = JSON.parse(response.getContentText());
+  return rows.length && Array.isArray(rows[0].admins)
+    ? rows[0].admins
+    : [];
 }
 function sendDailySummary() {
   var token  = getTelegramBotToken_();
