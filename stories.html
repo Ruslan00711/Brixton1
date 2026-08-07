@@ -260,16 +260,31 @@ async function saveAdminSchedule(){
   });
   const st=document.getElementById('adminStatus');
   const btn=document.getElementById('adminSaveBtn');
+  let adminToken=sessionStorage.getItem('BRIXTON_ADMIN_TOKEN')||'';
+  if(!adminToken){
+    adminToken=(prompt('Введите административный код:')||'').trim();
+    if(!adminToken){
+      st.className='admin-status err';st.textContent='Сохранение отменено: административный код не введён';
+      return;
+    }
+    sessionStorage.setItem('BRIXTON_ADMIN_TOKEN',adminToken);
+  }
   const old=btn.textContent;btn.disabled=true;btn.textContent='Сохраняю…';
   st.className='admin-status';st.textContent='Сохранение графика…';
   try{
     const r=await fetch(WEBAPP_URL,{
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'saveAdminSchedule',company_id:companyId,month:month,schedule:schedule})
+      body:JSON.stringify({action:'saveAdminSchedule',adminToken:adminToken,company_id:companyId,month:month,schedule:schedule})
     });
     const json=await r.json();
-    if(!json.success) throw new Error(json.error||'Не удалось сохранить график');
+    if(!json.success){
+      if(json.error==='Доступ запрещён'){
+        sessionStorage.removeItem('BRIXTON_ADMIN_TOKEN');
+        throw new Error('Неверный административный код');
+      }
+      throw new Error(json.error||'Не удалось сохранить график');
+    }
     ADMIN_SCHEDULE=json.data||schedule;
     st.className='admin-status ok';st.textContent='✓ График сохранён';
   }catch(e){
