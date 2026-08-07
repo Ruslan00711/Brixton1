@@ -3845,22 +3845,27 @@ function sendDailySummary() {
   var dstr = Utilities.formatDate(new Date(), tz, 'dd.MM');
 
   // основная строка: задачи + логи выполнения + отправленные
-  var g = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=data', {
+  var mainSelect = [
+    'tasks:data->tasks',
+    'taskSentToday:data->taskSent->' + today,
+    'taskLogToday:data->taskLog->' + today
+  ].join(',');
+  var g = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=' + encodeURIComponent(mainSelect), {
     method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
   });
   var rows = JSON.parse(g.getContentText());
-  var data = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
-  var tasks = Array.isArray(data.tasks) ? data.tasks : [];
-  var sentToday = (data.taskSent && data.taskSent[today]) ? data.taskSent[today] : {};
-  var logToday  = (data.taskLog && data.taskLog[today]) ? data.taskLog[today] : {};
+  var mainData = (rows && rows[0]) ? rows[0] : {};
+  var tasks = Array.isArray(mainData.tasks) ? mainData.tasks : [];
+  var sentToday = mainData.taskSentToday || {};
+  var logToday  = mainData.taskLogToday || {};
 
   // строка shifts (кто на смене)
-  var gs = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.shifts&select=data', {
+  var shiftsSelect = 'shiftsToday:data->' + today;
+  var gs = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.shifts&select=' + encodeURIComponent(shiftsSelect), {
     method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
   });
   var rowsS = JSON.parse(gs.getContentText());
-  var shiftsData = (rowsS && rowsS[0] && rowsS[0].data) ? rowsS[0].data : {};
-  var shiftsToday = shiftsData[today] || {};
+  var shiftsToday = (rowsS && rowsS[0] && rowsS[0].shiftsToday) ? rowsS[0].shiftsToday : {};
 
   // быстрый доступ к тексту/времени задачи по id
   var taskById = {};
