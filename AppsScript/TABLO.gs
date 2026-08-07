@@ -138,7 +138,7 @@ if (backupText) {
     'announcements:data->announcements',
     'masterGoals:data->masterGoals',
     'adminSchedules:data->adminSchedules',
-    'currentMonth:data->months->' + actualMonthKey
+    'siteBarbers:data->months->' + actualMonthKey + '->barbers'
   ].join(',');
 
   var store = {};
@@ -249,17 +249,9 @@ var adminSchedule =
       10
     ) || 60000;
 
-  var currentMonth =
-    store.currentMonth
-      ? store.currentMonth
-      : null;
-
   var siteBarbers =
-    (
-      currentMonth &&
-      Array.isArray(currentMonth.barbers)
-    )
-      ? currentMonth.barbers
+    Array.isArray(store.siteBarbers)
+      ? store.siteBarbers
       : [];
 
   function normName_(value) {
