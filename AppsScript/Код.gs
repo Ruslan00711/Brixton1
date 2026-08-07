@@ -3370,13 +3370,13 @@ function sendDueTasks() {
   var isLast = (dayNum === lastDay);
 
   // читаем задачи из Supabase
-  var getRes = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=data', {
+  var getRes = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=tasks:data->tasks,taskSent:data->taskSent', {
     method: 'get',
     headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() },
     muteHttpExceptions: true
   });
   var rows = JSON.parse(getRes.getContentText());
-  var data = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
+  var data = (rows && rows[0]) ? rows[0] : {};
   var tasks = Array.isArray(data.tasks) ? data.tasks : [];
   var sent = data.taskSent || {};        // { 'YYYY-MM-DD': ['taskId', ...] }
   if (!sent[today]) sent[today] = {};
