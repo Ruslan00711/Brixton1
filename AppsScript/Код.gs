@@ -3762,12 +3762,11 @@ function askShift() {
   var today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
 
   // читаем админов из облака
-  var getRes = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=data', {
+  var getRes = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=admins:data->admins', {
     method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
   });
   var rows = JSON.parse(getRes.getContentText());
-  var data = (rows && rows[0] && rows[0].data) ? rows[0].data : {};
-  var admins = data.admins || {};
+  var admins = (rows && rows[0] && rows[0].admins) ? rows[0].admins : {};
 
   Object.keys(THREAD).forEach(function (bid) {
     var names = admins[bid] || [];
