@@ -1268,17 +1268,42 @@ if (e.parameter.action === 'getAdminSchedule') {
 function getAdminSchedule_(companyId, month) {
   validateAdminScheduleRequest_(companyId, month);
 
-  const fullData = getBrixtonStoreData_();
+  const select =
+    'schedule:data->adminSchedules->' +
+    companyId +
+    '->' +
+    month;
 
-  if (
-    !fullData.adminSchedules ||
-    !fullData.adminSchedules[companyId] ||
-    !fullData.adminSchedules[companyId][month]
-  ) {
-    return {};
+  const response = UrlFetchApp.fetch(
+    SUPABASE_URL +
+      '/rest/v1/brixton_store?id=eq.main&select=' +
+      encodeURIComponent(select),
+    {
+      method: 'get',
+      headers: {
+        apikey: getSupabaseServiceRole_(),
+        Authorization: 'Bearer ' + getSupabaseServiceRole_()
+      },
+      muteHttpExceptions: true
+    }
+  );
+
+  const responseCode = response.getResponseCode();
+
+  if (responseCode < 200 || responseCode >= 300) {
+    throw new Error(
+      'Ошибка загрузки из Supabase: ' +
+      responseCode +
+      ' — ' +
+      response.getContentText()
+    );
   }
 
-  return fullData.adminSchedules[companyId][month];
+  const rows = JSON.parse(response.getContentText());
+
+  return rows.length && rows[0].schedule
+    ? rows[0].schedule
+    : {};
 }
 
 
