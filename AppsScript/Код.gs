@@ -3085,6 +3085,9 @@ if (mins >= SUMMARY) {
       props.setProperty(monthlyKey, '1');
     }
   }
+  if (mins >= 23 * 60 || mins < 9 * 60) {
+    return;
+  }
   sendDueTasks();
 analyzeSchedule();
 }
