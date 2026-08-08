@@ -133,10 +133,6 @@ if (backupText) {
     parts[0];
 
   var tvBoardSelect = [
-    'goals:data->goals',
-    'salesGoals:data->salesGoals',
-    'announcements:data->announcements',
-    'masterGoals:data->masterGoals',
     'adminSchedules:data->adminSchedules',
     'siteBarbers:data->months->' + actualMonthKey + '->barbers'
   ].join(',');
@@ -174,25 +170,22 @@ var supabaseLoaded = false;
       'getTvBoard: Supabase недоступен: ' + err
     );
   }
+  var goalsData = getGoalsData_();
   var goals =
-    store.goals ||
+    goalsData.goals ||
     {
       '694866': 450,
       '1076318': 450
     };
 
   var salesGoals =
-    store.salesGoals ||
+    goalsData.salesGoals ||
     {
       '694866': 60000,
       '1076318': 60000
     };
 
-  var announcements = (
-    Array.isArray(store.announcements)
-      ? store.announcements
-      : []
-  ).filter(function(item) {
+  var announcements = getAnnouncementsData_().filter(function(item) {
     if (!item || item.active === false) return false;
 
     var branch = String(item.branch || 'both');
@@ -221,7 +214,7 @@ var supabaseLoaded = false;
    *   }
    * }
    */
-  var allMasterGoals = store.masterGoals || {};
+  var allMasterGoals = goalsData.masterGoals || {};
   var branchMasterGoals =
     allMasterGoals[String(companyId)] || {};
 // График администраторов

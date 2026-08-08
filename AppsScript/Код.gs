@@ -846,18 +846,214 @@ function fetchStoreProjection_(select) {
 }
 
 function getFreeSlotsData_() {
-  var row = fetchStoreProjection_('freeSlots:data->freeSlots');
-  return row.freeSlots || null;
+  try {
+    var shtabixApiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+
+    if (!shtabixApiKey) {
+      throw new Error('SHTABIX_API_KEY is not set');
+    }
+
+    var response = UrlFetchApp.fetch(
+      'https://shtabix.ru/api/v1/internal/free-slots',
+      {
+        method: 'get',
+        headers: {
+          'X-API-Key': shtabixApiKey,
+          'Accept': 'application/json'
+        },
+        muteHttpExceptions: true
+      }
+    );
+    var responseCode = response.getResponseCode();
+    if (responseCode !== 200) {
+      throw new Error('HTTP ' + responseCode);
+    }
+
+    var data = JSON.parse(response.getContentText());
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      typeof data.generatedAt !== 'string' ||
+      !data.generatedAt ||
+      !Array.isArray(data.dates) ||
+      !data.branches ||
+      typeof data.branches !== 'object' ||
+      Array.isArray(data.branches)
+    ) {
+      throw new Error('invalid response');
+    }
+
+    Logger.log('freeSlots source: SHTABIX');
+    return data;
+  } catch (shtabixError) {
+    var reason = shtabixError && shtabixError.message
+      ? String(shtabixError.message)
+      : String(shtabixError);
+    Logger.log('freeSlots source: Supabase fallback | reason: ' + reason.substring(0, 200));
+    var row = fetchStoreProjection_('freeSlots:data->freeSlots');
+    return row.freeSlots || null;
+  }
+}
+
+function getAnnouncementsData_() {
+  try {
+    var apiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+    if (!apiKey) throw new Error('SHTABIX_API_KEY is not set');
+
+    var response = UrlFetchApp.fetch(
+      'https://shtabix.ru/api/v1/internal/announcements',
+      {
+        method: 'get',
+        headers: {
+          'X-API-Key': apiKey,
+          'Accept': 'application/json'
+        },
+        muteHttpExceptions: true
+      }
+    );
+    var responseCode = response.getResponseCode();
+    if (responseCode !== 200) throw new Error('HTTP ' + responseCode);
+
+    var data = JSON.parse(response.getContentText());
+    if (!data || typeof data !== 'object' || !Array.isArray(data.announcements)) {
+      throw new Error('invalid response');
+    }
+
+    var announcements = data.announcements.map(function(item) {
+      if (
+        !item ||
+        typeof item !== 'object' ||
+        typeof item.id !== 'string' ||
+        !item.id ||
+        typeof item.branch !== 'string' ||
+        !item.branch ||
+        typeof item.title !== 'string' ||
+        typeof item.text !== 'string' ||
+        typeof item.active !== 'boolean'
+      ) {
+        throw new Error('invalid announcement');
+      }
+      return {
+        id: item.id,
+        branch: item.branch,
+        title: item.title,
+        text: item.text,
+        active: item.active
+      };
+    });
+
+    Logger.log('announcements source: SHTABIX');
+    return announcements;
+  } catch (shtabixError) {
+    var reason = shtabixError && shtabixError.message
+      ? String(shtabixError.message)
+      : String(shtabixError);
+    Logger.log('announcements source: Supabase fallback | reason: ' + reason.substring(0, 200));
+    var row = fetchStoreProjection_('announcements:data->announcements');
+    return Array.isArray(row.announcements) ? row.announcements : [];
+  }
+}
+
+function getGoalsData_() {
+  try {
+    var apiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+    if (!apiKey) throw new Error('SHTABIX_API_KEY is not set');
+
+    var response = UrlFetchApp.fetch(
+      'https://shtabix.ru/api/v1/internal/goals',
+      {
+        method: 'get',
+        headers: {
+          'X-API-Key': apiKey,
+          'Accept': 'application/json'
+        },
+        muteHttpExceptions: true
+      }
+    );
+    var responseCode = response.getResponseCode();
+    if (responseCode !== 200) throw new Error('HTTP ' + responseCode);
+
+    var data = JSON.parse(response.getContentText());
+    function isPlainObject(value) {
+      return value && typeof value === 'object' && !Array.isArray(value);
+    }
+    if (
+      !isPlainObject(data) ||
+      !isPlainObject(data.goals) ||
+      !isPlainObject(data.salesGoals) ||
+      !isPlainObject(data.masterGoals)
+    ) {
+      throw new Error('invalid response');
+    }
+
+    Object.keys(data.goals).forEach(function(branchId) {
+      var value = data.goals[branchId];
+      if (typeof value !== 'number' || !isFinite(value) || value < 0) {
+        throw new Error('invalid goals');
+      }
+    });
+    Object.keys(data.salesGoals).forEach(function(branchId) {
+      var value = data.salesGoals[branchId];
+      if (typeof value !== 'number' || !isFinite(value) || value < 0) {
+        throw new Error('invalid salesGoals');
+      }
+    });
+    Object.keys(data.masterGoals).forEach(function(branchId) {
+      var masters = data.masterGoals[branchId];
+      if (!isPlainObject(masters)) throw new Error('invalid masterGoals');
+      Object.keys(masters).forEach(function(masterName) {
+        var goal = masters[masterName];
+        if (
+          !masterName ||
+          !isPlainObject(goal) ||
+          typeof goal.goods !== 'number' ||
+          !isFinite(goal.goods) ||
+          goal.goods < 0 ||
+          typeof goal.services !== 'number' ||
+          !isFinite(goal.services) ||
+          goal.services < 0
+        ) {
+          throw new Error('invalid masterGoals');
+        }
+      });
+    });
+
+    Logger.log('goals source: SHTABIX');
+    return {
+      goals: data.goals,
+      salesGoals: data.salesGoals,
+      masterGoals: data.masterGoals
+    };
+  } catch (shtabixError) {
+    var reason = shtabixError && shtabixError.message
+      ? String(shtabixError.message)
+      : String(shtabixError);
+    Logger.log('goals source: Supabase fallback | reason: ' + reason.substring(0, 200));
+    var row = fetchStoreProjection_([
+      'goals:data->goals',
+      'salesGoals:data->salesGoals',
+      'masterGoals:data->masterGoals'
+    ].join(','));
+    return {
+      goals: row.goals || {},
+      salesGoals: row.salesGoals || {},
+      masterGoals: row.masterGoals || {}
+    };
+  }
 }
 
 function getAdminData_() {
+  var announcements = getAnnouncementsData_();
+  var goalsData = getGoalsData_();
   var row = fetchStoreProjection_([
     'tasks:data->tasks',
     'admins:data->admins',
-    'announcements:data->announcements',
-    'goals:data->goals',
-    'salesGoals:data->salesGoals',
-    'masterGoals:data->masterGoals',
     'current:data->current',
     'months:data->months'
   ].join(','));
@@ -927,10 +1123,10 @@ function getAdminData_() {
   return {
     tasks: Array.isArray(row.tasks) ? row.tasks : [],
     admins: row.admins || {},
-    announcements: Array.isArray(row.announcements) ? row.announcements : [],
-    goals: row.goals || {},
-    salesGoals: row.salesGoals || {},
-    masterGoals: row.masterGoals || {},
+    announcements: announcements,
+    goals: goalsData.goals,
+    salesGoals: goalsData.salesGoals,
+    masterGoals: goalsData.masterGoals,
     goalMasters: goalMasters,
     goalHistory: goalHistory
   };
@@ -1046,12 +1242,185 @@ function saveAdminSections_(sections) {
     );
     var code = response.getResponseCode();
     if (code < 200 || code >= 300) throw new Error('Supabase PATCH: HTTP ' + code);
+    if (Object.prototype.hasOwnProperty.call(sections, 'announcements')) {
+      dualWriteAnnouncementsToShtabix_(sections.announcements);
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(sections, 'goals') &&
+      Object.prototype.hasOwnProperty.call(sections, 'salesGoals') &&
+      Object.prototype.hasOwnProperty.call(sections, 'masterGoals')
+    ) {
+      dualWriteGoalsToShtabix_(sections);
+    }
   } finally {
     lock.releaseLock();
   }
 }
 
+function dualWriteAnnouncementsToShtabix_(announcements) {
+  try {
+    var apiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+    if (!apiKey) throw new Error('SHTABIX_API_KEY is not set');
+
+    var url = 'https://shtabix.ru/api/v1/internal/announcements';
+    var headers = {
+      'X-API-Key': apiKey,
+      'Accept': 'application/json'
+    };
+    var writeResponse = UrlFetchApp.fetch(url, {
+      method: 'put',
+      contentType: 'application/json',
+      headers: headers,
+      payload: JSON.stringify({announcements: announcements}),
+      muteHttpExceptions: true
+    });
+    var writeCode = writeResponse.getResponseCode();
+    if (writeCode < 200 || writeCode >= 300) {
+      throw new Error('SHTABIX PUT HTTP ' + writeCode + ': ' +
+        writeResponse.getContentText().substring(0, 500));
+    }
+
+    var readResponse = UrlFetchApp.fetch(url, {
+      method: 'get',
+      headers: headers,
+      muteHttpExceptions: true
+    });
+    var readCode = readResponse.getResponseCode();
+    if (readCode !== 200) {
+      throw new Error('SHTABIX GET HTTP ' + readCode + ': ' +
+        readResponse.getContentText().substring(0, 500));
+    }
+
+    var readData = JSON.parse(readResponse.getContentText());
+    var shtabixAnnouncements = readData && Array.isArray(readData.announcements)
+      ? readData.announcements
+      : null;
+    if (!shtabixAnnouncements) throw new Error('SHTABIX response is invalid');
+
+    function comparable(list) {
+      return list.map(function(item) {
+        return {
+          id: String(item.id || ''),
+          branch: String(item.branch || ''),
+          title: String(item.title || ''),
+          text: String(item.text || ''),
+          active: item.active !== false
+        };
+      });
+    }
+
+    var matches = JSON.stringify(comparable(announcements)) ===
+      JSON.stringify(comparable(shtabixAnnouncements));
+    Logger.log('SHTABIX announcements comparison: ' + JSON.stringify({
+      ok: matches,
+      supabaseCount: announcements.length,
+      shtabixCount: shtabixAnnouncements.length
+    }));
+  } catch (error) {
+    Logger.log('SHTABIX announcements dual-write error: ' + error);
+  }
+}
+
+function dualWriteGoalsToShtabix_(sections) {
+  try {
+    var apiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+    if (!apiKey) throw new Error('SHTABIX_API_KEY is not set');
+
+    var payload = {
+      goals: sections.goals,
+      salesGoals: sections.salesGoals,
+      masterGoals: sections.masterGoals
+    };
+    var url = 'https://shtabix.ru/api/v1/internal/goals';
+    var headers = {
+      'X-API-Key': apiKey,
+      'Accept': 'application/json'
+    };
+    var writeResponse = UrlFetchApp.fetch(url, {
+      method: 'put',
+      contentType: 'application/json',
+      headers: headers,
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    var writeCode = writeResponse.getResponseCode();
+    if (writeCode < 200 || writeCode >= 300) {
+      throw new Error('SHTABIX PUT HTTP ' + writeCode + ': ' +
+        writeResponse.getContentText().substring(0, 500));
+    }
+
+    var readResponse = UrlFetchApp.fetch(url, {
+      method: 'get',
+      headers: headers,
+      muteHttpExceptions: true
+    });
+    var readCode = readResponse.getResponseCode();
+    if (readCode !== 200) {
+      throw new Error('SHTABIX GET HTTP ' + readCode + ': ' +
+        readResponse.getContentText().substring(0, 500));
+    }
+
+    var readData = JSON.parse(readResponse.getContentText());
+    if (
+      !readData ||
+      typeof readData !== 'object' ||
+      !readData.goals ||
+      typeof readData.goals !== 'object' ||
+      Array.isArray(readData.goals) ||
+      !readData.salesGoals ||
+      typeof readData.salesGoals !== 'object' ||
+      Array.isArray(readData.salesGoals) ||
+      !readData.masterGoals ||
+      typeof readData.masterGoals !== 'object' ||
+      Array.isArray(readData.masterGoals)
+    ) {
+      throw new Error('SHTABIX response is invalid');
+    }
+
+    function canonical(value) {
+      if (Array.isArray(value)) return value.map(canonical);
+      if (value && typeof value === 'object') {
+        var result = {};
+        Object.keys(value).sort().forEach(function(key) {
+          result[key] = canonical(value[key]);
+        });
+        return result;
+      }
+      return value;
+    }
+
+    function sectionMatches(name) {
+      return JSON.stringify(canonical(payload[name])) ===
+        JSON.stringify(canonical(readData[name]));
+    }
+
+    var goalsMatch = sectionMatches('goals');
+    var salesGoalsMatch = sectionMatches('salesGoals');
+    var masterGoalsMatch = sectionMatches('masterGoals');
+    Logger.log('SHTABIX goals comparison: ' + JSON.stringify({
+      ok: goalsMatch && salesGoalsMatch && masterGoalsMatch,
+      goals: goalsMatch,
+      salesGoals: salesGoalsMatch,
+      masterGoals: masterGoalsMatch
+    }));
+  } catch (error) {
+    Logger.log('SHTABIX goals dual-write error: ' + error);
+  }
+}
+
 function doGet(e){
+  var params = (e && e.parameter) ? e.parameter : {};
+  Logger.log(
+    'doGet input: action=' + (params.action || 'NO_ACTION') +
+    (params.company_id ? ', company_id=' + params.company_id : '') +
+    ', month=' + Boolean(params.month) +
+    ', from=' + Boolean(params.from) +
+    ', to=' + Boolean(params.to)
+  );
   if(e.parameter.action === 'getFreeSlots'){
     try {
       return jsonResponse_({success:true, data:getFreeSlotsData_()});
@@ -2925,11 +3294,103 @@ function buildFreeSlots() {
     muteHttpExceptions: true
   });
   Logger.log('=== Supabase PATCH -> HTTP ' + patchRes.getResponseCode());
+
+  // Temporary dual-write: Supabase remains primary; SHTABIX receives a copy.
+  // SHTABIX failures are logged and must not break Supabase/Stories/TV.
+  try {
+    var shtabixApiKey = PropertiesService
+      .getScriptProperties()
+      .getProperty('SHTABIX_API_KEY');
+
+    if (!shtabixApiKey) throw new Error('SHTABIX_API_KEY is not set');
+
+    var shtabixUrl = 'https://shtabix.ru/api/v1/internal/free-slots';
+    var shtabixHeaders = {
+      'X-API-Key': shtabixApiKey,
+      'Accept': 'application/json'
+    };
+    var shtabixWrite = UrlFetchApp.fetch(shtabixUrl + '/snapshot', {
+      method: 'put',
+      contentType: 'application/json',
+      headers: shtabixHeaders,
+      payload: JSON.stringify(out),
+      muteHttpExceptions: true
+    });
+    var shtabixWriteCode = shtabixWrite.getResponseCode();
+    if (shtabixWriteCode < 200 || shtabixWriteCode >= 300) {
+      throw new Error('SHTABIX PUT HTTP ' + shtabixWriteCode + ': ' +
+        shtabixWrite.getContentText().substring(0, 500));
+    }
+
+    var shtabixRead = UrlFetchApp.fetch(shtabixUrl, {
+      method: 'get',
+      headers: shtabixHeaders,
+      muteHttpExceptions: true
+    });
+    var shtabixReadCode = shtabixRead.getResponseCode();
+    if (shtabixReadCode < 200 || shtabixReadCode >= 300) {
+      throw new Error('SHTABIX GET HTTP ' + shtabixReadCode + ': ' +
+        shtabixRead.getContentText().substring(0, 500));
+    }
+
+    var shtabixData = JSON.parse(shtabixRead.getContentText());
+
+    function snapshotIndex(snapshot) {
+      var result = {branches: [], masters: [], slots: [], branchCounts: {}};
+      Object.keys(snapshot.branches || {}).sort().forEach(function(branchId) {
+        var branch = snapshot.branches[branchId] || {};
+        result.branches.push(branchId);
+        result.branchCounts[branchId] = 0;
+        (branch.masters || []).forEach(function(master) {
+          var masterKey = String(
+            master.id === null || master.id === undefined
+              ? (master.name || '')
+              : master.id
+          );
+          var masterHasSlots = false;
+          Object.keys(master.slots || {}).sort().forEach(function(slotDate) {
+            (master.slots[slotDate] || []).slice().sort().forEach(function(slotTime) {
+              masterHasSlots = true;
+              result.branchCounts[branchId]++;
+              result.slots.push(branchId + '|' + masterKey + '|' + slotDate + '|' + slotTime);
+            });
+          });
+          if (masterHasSlots) result.masters.push(branchId + '|' + masterKey);
+        });
+      });
+      result.masters.sort();
+      result.slots.sort();
+      return result;
+    }
+
+    var oldIndex = snapshotIndex(out);
+    var newIndex = snapshotIndex(shtabixData);
+    var generatedAtMatches = new Date(out.generatedAt).toISOString() ===
+      new Date(shtabixData.generatedAt).toISOString();
+    var datesMatch = JSON.stringify((out.dates || []).slice().sort()) ===
+      JSON.stringify((shtabixData.dates || []).slice().sort());
+    var branchesMatch = JSON.stringify(oldIndex.branches) === JSON.stringify(newIndex.branches);
+    var mastersMatch = JSON.stringify(oldIndex.masters) === JSON.stringify(newIndex.masters);
+    var slotsMatch = JSON.stringify(oldIndex.slots) === JSON.stringify(newIndex.slots);
+
+    Logger.log('SHTABIX freeSlots comparison: ' + JSON.stringify({
+      ok: generatedAtMatches && datesMatch && branchesMatch && mastersMatch && slotsMatch,
+      generatedAt: generatedAtMatches,
+      dates: datesMatch,
+      branches: branchesMatch,
+      mastersWithSlots: mastersMatch,
+      slots: slotsMatch,
+      supabaseCounts: oldIndex.branchCounts,
+      shtabixCounts: newIndex.branchCounts
+    }));
+  } catch (shtabixError) {
+    Logger.log('SHTABIX freeSlots dual-write error: ' + shtabixError);
+  }
   Logger.log('=== Готово. Филиалов записано: ' + Object.keys(out.branches).length + ', даты: ' + dates.join(', '));
 }
 function tgReminder(day) {
   var token   = getTelegramBotToken_();
-  var site    = 'https://ruslan00711.github.io/Brixton1/stories.html';
+  var site = 'https://shtabix.ru/stories.html';
   var chatId  = '-1003583832196';                 // чат «BRIXTON | Админы»
 
   // филиал -> тема (topic)
@@ -3398,11 +3859,22 @@ function sendDueTasks() {
   var isLast = (dayNum === lastDay);
 
   // читаем задачи из Supabase
-  var getRes = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=tasks:data->tasks,taskSent:data->taskSent', {
+  var select =
+    'tasks:data->tasks,taskSent:data->taskSent';
+
+  var getRes = UrlFetchApp.fetch(
+    SUPABASE_URL +
+      '/rest/v1/brixton_store?id=eq.main&select=' +
+      encodeURIComponent(select),
+    {
     method: 'get',
-    headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() },
+    headers: {
+      apikey: getSupabaseServiceRole_(),
+      Authorization: 'Bearer ' + getSupabaseServiceRole_()
+    },
     muteHttpExceptions: true
-  });
+    }
+  );
   var rows = JSON.parse(getRes.getContentText());
   var data = (rows && rows[0]) ? rows[0] : {};
   var tasks = Array.isArray(data.tasks) ? data.tasks : [];
@@ -3499,6 +3971,18 @@ function tgTestProd() {
 function doPost(e) {
   try {
     var update = JSON.parse(e.postData.contents);
+    var requestType = 'other';
+    if (update.action) {
+      requestType = 'action=' + String(update.action);
+    } else if (update.callback_query) {
+      requestType = 'callback_query';
+      if (update.callback_query.data) {
+        requestType += ', data=' + String(update.callback_query.data);
+      }
+    } else if (update.message) {
+      requestType = 'message';
+    }
+    Logger.log('doPost input: ' + requestType);
 if (['getOwnerData','saveOwnerSections','restoreOwnerData'].indexOf(update.action) !== -1) {
   requireOwnerToken_(update.ownerToken);
   if (e.postData.contents.length > 5500000) throw new Error('Слишком большой запрос');
@@ -3523,7 +4007,6 @@ if (['getAdminData','saveTasks','saveAdmins','saveAnnouncements','saveGoals'].in
   saveAdminSections_(sections);
   return jsonResponse_({success:true, data:sections});
 }
-    Logger.log('doPost вызван: ' + (e.postData ? e.postData.contents.slice(0, 200) : 'нет данных'));
 // ГРАФИК АДМИНИСТРАТОРОВ
 if (update.action === 'saveAdminSchedule') {
   try {
@@ -4078,11 +4561,8 @@ function sendMasterReport() {
   var daysLeft = new Date(parts[0], parts[1], 0).getDate() - dayOfMonth; // дней до конца месяца
 
   // читаем цели из облака
-  var gr = UrlFetchApp.fetch(SUPABASE_URL + '/rest/v1/brixton_store?id=eq.main&select=goals:data->goals', {
-    method: 'get', headers: { apikey: getSupabaseServiceRole_(), Authorization: 'Bearer ' + getSupabaseServiceRole_() }, muteHttpExceptions: true
-  });
-  var gdata = JSON.parse(gr.getContentText());
-  var goals = (gdata && gdata[0] && gdata[0].goals) ? gdata[0].goals : { '694866': 450, '1076318': 450 };
+  var goalsData = getGoalsData_();
+  var goals = goalsData.goals || { '694866': 450, '1076318': 450 };
 
   function isPair(title){ var t=(title||'').toLowerCase().replace(/\s/g,''); return t.indexOf('друг+друг')!==-1||t.indexOf('папа+сын')!==-1; }
   function isNew(c){ return c&&(c.is_new===true||c.is_new===1); }
