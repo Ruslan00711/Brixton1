@@ -1885,6 +1885,7 @@ function sortMasters(list){
 }
 
 const p=new URLSearchParams(location.search);const key=(p.get('branch')||'mendeleeva').toLowerCase();const cid=BR[key]||(/^\d+$/.test(key)?key:BR.mendeleeva);
+const manualBrowserMode=p.get('manual')==='1';
 const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(Number(n)||0))+' ₽';
 const shortRub=n=>{
   const value=Math.round(Number(n)||0);
@@ -2427,7 +2428,11 @@ function isBrixtonWorkingHours(){
   const hour=Number(parts.find(x=>x.type==='hour').value);
   const minute=Number(parts.find(x=>x.type==='minute').value);
   const total=hour*60+minute;
-  return total>=570&&total<1350;
+  return total>=570&&total<1320;
+}
+
+function canLoadTvData(){
+  return manualBrowserMode||isBrixtonWorkingHours();
 }
 
 function clearLoadRetry(){
@@ -2439,7 +2444,7 @@ function clearLoadRetry(){
 
 function scheduleLoadRetry(attempt,delay){
   clearLoadRetry();
-  if(!isBrixtonWorkingHours())return;
+  if(!canLoadTvData())return;
   loadRetryTimer=setTimeout(()=>{
     loadRetryTimer=null;
     load(attempt);
@@ -2447,7 +2452,7 @@ function scheduleLoadRetry(attempt,delay){
 }
 
 async function load(attempt=1){
-  if(!isBrixtonWorkingHours()||loadInFlight||loadRetryTimer!==null)return;
+  if(!canLoadTvData()||loadInFlight||loadRetryTimer!==null)return;
   loadInFlight=true;
   boardRequestController=new AbortController();
   const timeoutId=setTimeout(()=>boardRequestController.abort(),30000);
@@ -2474,7 +2479,7 @@ async function load(attempt=1){
     lastBoardLoadAt=Date.now();
     document.getElementById('error').style.display='none';
   }catch(e){
-    if(!isBrixtonWorkingHours())return;
+    if(!canLoadTvData())return;
     if(attempt<3){
       scheduleLoadRetry(attempt+1,2000*attempt);
       return;
@@ -2554,7 +2559,7 @@ function showNextEvent(){
 }
 
 async function checkNewClientEvents(){
-  if(!isBrixtonWorkingHours()||scheduleInFlight)return;
+  if(!canLoadTvData()||scheduleInFlight)return;
   scheduleInFlight=true;
   scheduleRequestController=new AbortController();
   const timeoutId=setTimeout(()=>scheduleRequestController.abort(),20000);
@@ -2598,7 +2603,7 @@ async function checkNewClientEvents(){
       });
     });
   }catch(e){
-    if(isBrixtonWorkingHours())showScheduleError();
+    if(canLoadTvData())showScheduleError();
   }finally{
     clearTimeout(timeoutId);
     scheduleRequestController=null;
@@ -2726,7 +2731,7 @@ let wasWorkingHours=false;
 let refreshCycleInFlight=false;
 
 async function refreshCycle(){
-  const working=isBrixtonWorkingHours();
+  const working=canLoadTvData();
 
   if(!working){
     clearLoadRetry();
