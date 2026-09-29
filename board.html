@@ -1320,6 +1320,64 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #dashboardScreen{padding:clamp(6px,1.1vh,14px) clamp(8px,1vw,18px);display:flex;flex-direction:column;gap:clamp(5px,.8vh,12px);background:#0f1112}
 @media(max-height:900px){#dashboardScreen{padding:6px 8px;gap:5px}}
 
+/* ===== Общий рейтинг сети ===== */
+#networkScreen{padding:clamp(6px,1.1vh,14px) clamp(8px,1vw,18px);display:flex;flex-direction:column;gap:clamp(7px,1vh,13px);background:#0f1112;color:#f6f1e8}
+#networkScreen .network-top{height:62px;display:grid;grid-template-columns:255px minmax(210px,1fr) 220px 130px minmax(260px,auto);grid-template-rows:43px 16px;align-items:center;column-gap:14px;border-bottom:3px solid var(--gold);padding-bottom:5px;flex:0 0 auto}
+#networkScreen .network-logo{font-family:'Bebas Neue';font-size:38px;letter-spacing:10px;color:var(--gold);grid-row:1}
+#networkScreen .network-title{font-family:'Bebas Neue';font-size:29px;letter-spacing:4px;grid-row:1}
+#networkScreen .network-month{font-family:'Bebas Neue';font-size:23px;letter-spacing:2px;color:#ddd;grid-row:1;text-align:center}
+#networkScreen .network-clock{font-family:'Bebas Neue';font-size:34px;letter-spacing:2px;color:#fff;grid-row:1;text-align:center}
+#networkScreen .network-weather{grid-row:1;display:flex;align-items:center;justify-content:flex-end;gap:8px;white-space:nowrap}
+#networkScreen .network-weather-icon{font-size:25px}.network-weather-temp{font-family:'Bebas Neue';font-size:28px;color:var(--gold)}
+#networkScreen .network-weather-text{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-updated{grid-column:1/-1;grid-row:2;text-align:right;font-size:9px;color:#6f7477;text-transform:uppercase;letter-spacing:.8px}
+#networkScreen .network-branches{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:0 0 auto}
+#networkScreen .network-branch-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:11px;padding:8px 12px 10px;min-width:0}
+#networkScreen .network-branch-card.entuziastov{border-left-color:#72a9d8}
+#networkScreen .network-branch-name{font-family:'Bebas Neue';font-size:23px;letter-spacing:2px;margin-bottom:6px}
+#networkScreen .network-branch-card.mendeleeva .network-branch-name{color:var(--gold)}
+#networkScreen .network-branch-card.entuziastov .network-branch-name{color:#8bc0eb}
+#networkScreen .network-branch-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#networkScreen .network-branch-metric{background:#111416;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:6px 8px;min-width:0}
+#networkScreen .network-branch-metric span{display:block;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.55px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-branch-metric b{display:block;margin-top:2px;font-family:'Bebas Neue';font-size:22px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-ranking-card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0;flex:1}
+#networkScreen .network-ranking-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:7px 13px 5px;border-bottom:1px solid var(--line)}
+#networkScreen .network-ranking-heading h2{margin:0;font-family:'Bebas Neue';font-size:24px;letter-spacing:2.5px;color:var(--gold)}
+#networkScreen .network-ranking-heading span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+#networkScreen .network-ranking-wrap{flex:1;min-height:0;overflow:hidden;padding:0 9px 7px}
+#networkScreen .network-ranking{height:100%;table-layout:fixed}
+#networkScreen .network-ranking th{height:29px;padding:4px 5px;font-size:9px}
+#networkScreen .network-ranking td{height:var(--network-row-height,44px);padding:3px 5px;font-size:clamp(11px,1.25vh,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-ranking th:nth-child(1),#networkScreen .network-ranking td:nth-child(1){width:6%;text-align:center}
+#networkScreen .network-ranking th:nth-child(2),#networkScreen .network-ranking td:nth-child(2){width:24%;text-align:left}
+#networkScreen .network-ranking th:nth-child(3),#networkScreen .network-ranking td:nth-child(3){width:16%;text-align:left}
+#networkScreen .network-ranking th:nth-child(4),#networkScreen .network-ranking td:nth-child(4){width:12%}
+#networkScreen .network-ranking th:nth-child(5),#networkScreen .network-ranking td:nth-child(5){width:17%}
+#networkScreen .network-ranking th:nth-child(6),#networkScreen .network-ranking td:nth-child(6){width:15%}
+#networkScreen .network-ranking th:nth-child(7),#networkScreen .network-ranking td:nth-child(7){width:10%}
+#networkScreen .network-rank{font-family:'Bebas Neue';font-size:1.25em;color:#bbb}
+#networkScreen .network-master{font-weight:800}
+#networkScreen .network-branch-label{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:.8em;font-weight:700;color:#c3c7ca}
+#networkScreen .network-branch-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:0 0 auto}
+#networkScreen .network-branch-dot.entuziastov{background:#72a9d8}
+#networkScreen .network-service-revenue{font-weight:900;color:#fff}
+#networkScreen .network-plan{font-weight:800;color:var(--gold)}
+#networkScreen .network-leader{background:linear-gradient(90deg,rgba(201,168,76,.24),rgba(201,168,76,.05));box-shadow:inset 4px 0 0 var(--gold)}
+#networkScreen .network-leader .network-rank,#networkScreen .network-leader .network-master{color:#f4d77e}
+#networkScreen .network-trophy{font-size:.85em;margin-right:5px;color:var(--gold)}
+#networkScreen .network-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px}
+
+/* ===== Полноэкранное объявление в общей ротации ===== */
+#rotationAnnouncementScreen{background:#0f1112;color:#fff;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,96px)}
+#rotationAnnouncementScreen::before{content:'';position:absolute;inset:clamp(18px,2vw,38px);border:2px solid rgba(201,168,76,.42);border-radius:24px;pointer-events:none}
+#rotationAnnouncementScreen .rotation-announcement-content{position:relative;width:min(1500px,90vw);text-align:center;display:flex;flex-direction:column;align-items:center;gap:clamp(20px,3vh,42px)}
+#rotationAnnouncementScreen .rotation-announcement-label{font-family:'Bebas Neue';font-size:clamp(24px,2.2vw,42px);letter-spacing:.22em;color:var(--gold)}
+#rotationAnnouncementScreen .rotation-announcement-title{font-family:'Bebas Neue';font-size:clamp(48px,5.6vw,104px);line-height:1;letter-spacing:.035em;overflow-wrap:anywhere}
+#rotationAnnouncementScreen .rotation-announcement-text{max-width:1200px;font-size:clamp(26px,2.8vw,52px);font-weight:700;line-height:1.22;white-space:pre-wrap;overflow-wrap:anywhere;color:rgba(255,255,255,.9)}
+#rotationAnnouncementScreen .rotation-announcement-counter{font-size:clamp(15px,1.2vw,22px);color:rgba(255,255,255,.52)}
+@media(max-height:760px){#networkScreen{padding:5px 7px;gap:5px}#networkScreen .network-top{height:48px;grid-template-columns:190px minmax(170px,1fr) 170px 95px minmax(210px,auto);grid-template-rows:34px 11px}#networkScreen .network-logo{font-size:29px}#networkScreen .network-title{font-size:22px}#networkScreen .network-month{font-size:18px}#networkScreen .network-clock{font-size:27px}#networkScreen .network-branch-card{padding:5px 8px 6px}#networkScreen .network-branch-name{font-size:18px;margin-bottom:3px}#networkScreen .network-branch-metric{padding:3px 5px}#networkScreen .network-branch-metric b{font-size:17px}#networkScreen .network-ranking-heading{padding:4px 9px 3px}#networkScreen .network-ranking-heading h2{font-size:19px}#networkScreen .network-ranking th{height:22px;font-size:7px;padding:2px 3px}#networkScreen .network-ranking td{font-size:10px;padding:2px 3px}}
+
 
 /* ===== График администраторов: одна компактная строка на весь месяц ===== */
 .admin-month-strip{
@@ -1422,6 +1480,31 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 </div>
 </div>
 
+<div class="tv-screen" id="networkScreen">
+  <div class="network-top">
+    <div class="network-logo">BRIXTON</div>
+    <div class="network-title">РЕЙТИНГ СЕТИ</div>
+    <div class="network-month" id="networkHeaderMonth">—</div>
+    <div class="network-clock" id="networkHeaderClock">--:--</div>
+    <div class="network-weather">
+      <span class="network-weather-icon" id="networkWeatherIcon">◌</span>
+      <span class="network-weather-temp" id="networkWeatherTemp">—°</span>
+      <span class="network-weather-text" id="networkWeatherText">Погода…</span>
+    </div>
+    <div class="network-updated" id="networkUpdated">Данные двух филиалов загружаются…</div>
+  </div>
+  <div class="network-branches" id="networkBranches"></div>
+  <section class="network-ranking-card">
+    <div class="network-ranking-heading"><h2>Все мастера BRIXTON</h2><span>сортировка по выручке услуг за текущий месяц</span></div>
+    <div class="network-ranking-wrap">
+      <table class="network-ranking">
+        <thead><tr><th>Место</th><th>Мастер</th><th>Филиал</th><th>Клиентов</th><th>Выручка услуг</th><th>Продажи товаров</th><th>План, %</th></tr></thead>
+        <tbody id="networkRankingBody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
 <div class="tv-screen" id="scheduleScreen">
   <div class="schedule-topbar">
     <div class="schedule-logo">BRIXTON</div>
@@ -1449,6 +1532,15 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
     </div>
   </div>
   <div class="schedule-bottom"></div>
+</div>
+
+<div class="tv-screen" id="rotationAnnouncementScreen" aria-live="polite">
+  <div class="rotation-announcement-content">
+    <div class="rotation-announcement-label">ОБЪЯВЛЕНИЕ BRIXTON</div>
+    <div class="rotation-announcement-title" id="rotationAnnouncementTitle">—</div>
+    <div class="rotation-announcement-text" id="rotationAnnouncementText">—</div>
+    <div class="rotation-announcement-counter" id="rotationAnnouncementCounter">—</div>
+  </div>
 </div>
 
 
@@ -1600,17 +1692,32 @@ function showScheduleError(){
 }
 
 const dashboardScreen={id:'dashboardScreen',duration:60000,show(){requestAnimationFrame(fitDaysTable)},hide(){}};
+const networkScreen={id:'networkScreen',duration:30000,show(){renderNetworkRanking()},hide(){}};
 const scheduleScreen={id:'scheduleScreen',duration:30000,show(){updateScheduleHeader();if(scheduleState.data)renderSchedule(scheduleState.data)},hide(){const line=document.getElementById('schedule-now-line');if(line)line.style.display='none'}};
-const screens=[dashboardScreen,scheduleScreen];
+const announcementScreen={id:'rotationAnnouncementScreen',duration:15000,show(){renderAnnouncement()},hide(){advanceAnnouncement()}};
+const screens=[dashboardScreen,networkScreen,scheduleScreen,announcementScreen];
 let currentScreenIndex=0;
 let screenSwitchTimer=null;
+function screenAvailable(screen){
+  if(screen.id==='networkScreen')return networkRankingState.ready;
+  if(screen.id==='rotationAnnouncementScreen')return announcementItems.length>0;
+  return true;
+}
+function nextAvailableScreenIndex(index){
+  let next=((index%screens.length)+screens.length)%screens.length;
+  for(let checked=0;checked<screens.length;checked++){
+    if(screenAvailable(screens[next]))return next;
+    next=(next+1)%screens.length;
+  }
+  return 0;
+}
 function scheduleNextScreen(){
   clearTimeout(screenSwitchTimer);
   const duration=screens[currentScreenIndex].duration||60000;
   screenSwitchTimer=setTimeout(()=>showScreen(currentScreenIndex+1),duration);
 }
 function showScreen(index){
-  const next=((index%screens.length)+screens.length)%screens.length;
+  const next=nextAvailableScreenIndex(index);
   screens[currentScreenIndex].hide();
   document.getElementById(screens[currentScreenIndex].id).classList.remove('active');
   currentScreenIndex=next;
@@ -1621,13 +1728,17 @@ function showScreen(index){
 function nextScreen(){showScreen(currentScreenIndex+1)}
 scheduleNextScreen();
 setInterval(updateScheduleHeader,1000);
-window.addEventListener('resize',()=>{if(document.getElementById('scheduleScreen').classList.contains('active')&&scheduleState.data)requestAnimationFrame(()=>renderSchedule(scheduleState.data));});
+window.addEventListener('resize',()=>{if(document.getElementById('scheduleScreen').classList.contains('active')&&scheduleState.data)requestAnimationFrame(()=>renderSchedule(scheduleState.data));if(document.getElementById('networkScreen').classList.contains('active')&&networkRankingState.ready)requestAnimationFrame(fitNetworkRankingRows);});
 updateScheduleHeader();
 </script>
 
 <script>
 const API='https://script.google.com/macros/s/AKfycbyqfD8xsp2rkX0eEASg2FoYXbtYpzXlC4TeXoS09RRDjvLDAG6UCNQqcLodVWG5oebzdA/exec';
 const BR={mendeleeva:'694866',entuziastov:'1076318'};
+const NETWORK_BRANCHES=[
+  {id:'694866',name:'Менделеева',className:'mendeleeva'},
+  {id:'1076318',name:'Энтузиастов',className:'entuziastov'}
+];
 const MASTER_ORDER=['Виталий','Арсений','Наиль','Сергей','Марина'];
 function sortMasters(list){
   return (Array.isArray(list)?list:[]).slice().sort((a,b)=>{
@@ -1640,7 +1751,7 @@ function sortMasters(list){
   });
 }
 
-const p=new URLSearchParams(location.search);const key=(p.get('branch')||'mendeleeva').toLowerCase();const cid=BR[key]||BR.mendeleeva;
+const p=new URLSearchParams(location.search);const key=(p.get('branch')||'mendeleeva').toLowerCase();const cid=BR[key]||(/^\d+$/.test(key)?key:BR.mendeleeva);
 const rub=n=>new Intl.NumberFormat('ru-RU').format(Math.round(Number(n)||0))+' ₽';
 const shortRub=n=>{
   const value=Math.round(Number(n)||0);
@@ -1653,6 +1764,161 @@ const shortRub=n=>{
   return new Intl.NumberFormat('ru-RU').format(value)+' ₽';
 };
 const shortName=n=>{const s=(n||'').trim();const map={'Виталий':'ВИ','Арсений':'АР','Наиль':'НА','Сергей':'СР','Марина':'МА'};return map[s]||s.slice(0,2).toUpperCase();};
+
+const networkRankingState={ready:false,loading:false,branches:[],masters:[],updatedAt:0};
+
+function normalizeNetworkMasterName(value){
+  return String(value||'').trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ');
+}
+
+function escapeNetworkHtml(value){
+  return String(value===undefined||value===null?'':value)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function buildNetworkRanking(payloads){
+  const branches=[];
+  const masters=[];
+  const seen=new Set();
+
+  NETWORK_BRANCHES.forEach(branch=>{
+    const data=(payloads||[]).find(item=>String(item&&item.branchId)===branch.id);
+    if(!data)return;
+
+    const kpiByName=new Map();
+    (Array.isArray(data.kpiMasters)?data.kpiMasters:[]).forEach(item=>{
+      const normalized=normalizeNetworkMasterName(item&&item.name);
+      if(normalized&&!kpiByName.has(normalized))kpiByName.set(normalized,item);
+    });
+
+    const sourceMasters=Array.isArray(data.masters)?data.masters:[];
+    sourceMasters.forEach(master=>{
+      if(!master||!String(master.name||'').trim())return;
+      const normalizedName=normalizeNetworkMasterName(master.name);
+      const key=branch.id+':'+normalizedName;
+      if(seen.has(key))return;
+      seen.add(key);
+      const kpi=kpiByName.get(normalizedName)||{};
+      const servicesRevenue=Number(kpi.servicesTotal!==undefined?kpi.servicesTotal:master.servicesTotal)||0;
+      const goodsRevenue=Number(kpi.goodsTotal!==undefined?kpi.goodsTotal:(master.goodsTotal!==undefined?master.goodsTotal:master.sales))||0;
+      const servicesGoal=Number(kpi.servicesGoal!==undefined?kpi.servicesGoal:master.servicesGoal)||0;
+      masters.push({
+        id:key,name:String(master.name).trim(),branchId:branch.id,branchName:branch.name,branchClass:branch.className,
+        clients:Number(master.monthTotal)||0,servicesRevenue,goodsRevenue,
+        planPercent:servicesGoal>0?Math.round(servicesRevenue/servicesGoal*100):null
+      });
+      kpiByName.delete(normalizedName);
+    });
+
+    kpiByName.forEach((kpi,normalizedName)=>{
+      const key=branch.id+':name:'+normalizedName;
+      if(seen.has(key))return;
+      seen.add(key);
+      const servicesRevenue=Number(kpi.servicesTotal)||0;
+      const servicesGoal=Number(kpi.servicesGoal)||0;
+      masters.push({
+        id:key,name:String(kpi.name).trim(),branchId:branch.id,branchName:branch.name,branchClass:branch.className,
+        clients:0,servicesRevenue,goodsRevenue:Number(kpi.goodsTotal)||0,
+        planPercent:servicesGoal>0?Math.round(servicesRevenue/servicesGoal*100):null
+      });
+    });
+
+    const servicesTotal=Number(data.services&&data.services.total);
+    branches.push({
+      id:branch.id,name:branch.name,className:branch.className,
+      clients:Number(data.clients&&data.clients.monthTotal)||0,
+      services:Number.isFinite(servicesTotal)?servicesTotal:(Array.isArray(data.kpiMasters)?data.kpiMasters.reduce((sum,item)=>sum+(Number(item&&item.servicesTotal)||0),0):0),
+      goods:Number(data.sales&&data.sales.total)||0,
+      planPercent:Number(data.clients&&data.clients.goal)>0?Math.round((Number(data.clients.monthTotal)||0)/Number(data.clients.goal)*100):null,
+      updatedAt:String(data.updatedAt||'')
+    });
+  });
+
+  masters.sort((a,b)=>b.servicesRevenue-a.servicesRevenue||a.name.localeCompare(b.name,'ru')||a.branchName.localeCompare(b.branchName,'ru'));
+  return{branches,masters};
+}
+
+function fitNetworkRankingRows(){
+  const wrap=document.querySelector('#networkScreen .network-ranking-wrap');
+  const body=document.getElementById('networkRankingBody');
+  if(!wrap||!body)return;
+  const count=Math.max(1,body.children.length);
+  const available=Math.max(24,wrap.clientHeight-30);
+  document.getElementById('networkScreen').style.setProperty('--network-row-height',Math.max(24,Math.min(54,Math.floor(available/count)))+'px');
+}
+
+function renderNetworkRanking(){
+  if(!networkRankingState.ready)return;
+  const branches=document.getElementById('networkBranches');
+  branches.innerHTML=networkRankingState.branches.map(branch=>
+    '<section class="network-branch-card '+branch.className+'">'+
+      '<div class="network-branch-name">'+escapeNetworkHtml(branch.name)+'</div>'+
+      '<div class="network-branch-metrics">'+
+        '<div class="network-branch-metric"><span>Клиентов за месяц</span><b>'+branch.clients+'</b></div>'+
+        '<div class="network-branch-metric"><span>Выручка услуг</span><b>'+shortRub(branch.services)+'</b></div>'+
+        '<div class="network-branch-metric"><span>Продажи товаров</span><b>'+shortRub(branch.goods)+'</b></div>'+
+        '<div class="network-branch-metric"><span>Выполнение плана</span><b>'+(branch.planPercent===null?'—':branch.planPercent+'%')+'</b></div>'+
+      '</div>'+
+    '</section>'
+  ).join('');
+
+  const body=document.getElementById('networkRankingBody');
+  body.innerHTML=networkRankingState.masters.length?networkRankingState.masters.map((master,index)=>
+    '<tr class="'+(index===0?'network-leader':'')+'">'+
+      '<td class="network-rank">'+(index===0?'<span class="network-trophy" aria-label="Первое место">🏆</span>':'')+(index+1)+'</td>'+
+      '<td class="network-master">'+escapeNetworkHtml(master.name)+'</td>'+
+      '<td><span class="network-branch-label"><span class="network-branch-dot '+master.branchClass+'"></span>'+escapeNetworkHtml(master.branchName)+'</span></td>'+
+      '<td>'+master.clients+'</td>'+
+      '<td class="network-service-revenue">'+shortRub(master.servicesRevenue)+'</td>'+
+      '<td>'+shortRub(master.goodsRevenue)+'</td>'+
+      '<td class="network-plan">'+(master.planPercent===null?'—':master.planPercent+'%')+'</td>'+
+    '</tr>'
+  ).join(''):'<tr><td colspan="7"><div class="network-empty">Данные мастеров обновляются…</div></td></tr>';
+
+  const updated=networkRankingState.branches.map(branch=>branch.updatedAt).filter(Boolean).join(' · ');
+  document.getElementById('networkUpdated').textContent=updated?'Актуально: '+updated:'Данные двух филиалов обновлены';
+  requestAnimationFrame(fitNetworkRankingRows);
+}
+
+async function requestNetworkBranch(companyId){
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),30000);
+  try{
+    const response=await fetch(API+'?action=getTvBoard&company_id='+companyId+'&_='+Date.now(),{cache:'no-store',redirect:'follow',signal:controller.signal});
+    const text=await response.text();
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const trimmed=text.trim();
+    if(!trimmed||trimmed[0]==='<')throw new Error('Invalid board response');
+    const json=JSON.parse(trimmed);
+    if(!json.success||!json.data)throw new Error(json.error||'Network board unavailable');
+    return Object.assign({},json.data,{branchId:String(companyId)});
+  }finally{
+    clearTimeout(timeoutId);
+  }
+}
+
+async function updateNetworkRanking(currentData,currentBranchId=cid){
+  if(networkRankingState.loading)return;
+  networkRankingState.loading=true;
+  try{
+    const normalizedCurrentData=Object.assign({},currentData,{branchId:String(currentBranchId)});
+    const other=NETWORK_BRANCHES.find(branch=>branch.id!==String(currentBranchId));
+    if(!other)throw new Error('Current branch is outside network scope');
+    const otherData=await requestNetworkBranch(other.id);
+    const ranking=buildNetworkRanking([normalizedCurrentData,otherData]);
+    if(ranking.branches.length!==NETWORK_BRANCHES.length)throw new Error('Incomplete network data');
+    networkRankingState.branches=ranking.branches;
+    networkRankingState.masters=ranking.masters;
+    networkRankingState.updatedAt=Date.now();
+    networkRankingState.ready=true;
+    if(document.getElementById('networkScreen').classList.contains('active'))renderNetworkRanking();
+  }catch(error){
+    /* Последняя полная версия остаётся на экране; при первом сбое экран пропускается. */
+  }finally{
+    networkRankingState.loading=false;
+  }
+}
 function renderPlanStatus(clients){
   const goal=Number(clients.goal)||0, fact=Number(clients.monthTotal)||0;
   const percent=goal>0?fact/goal*100:0;
@@ -1705,7 +1971,6 @@ function pctClass(pct){
 
 let announcementItems=[];
 let announcementIndex=0;
-let announcementTimer=null;
 
 function renderAnnouncement(){
   const panel=document.getElementById('announcementPanel');
@@ -1717,18 +1982,20 @@ function renderAnnouncement(){
 
   panel.classList.remove('hidden');
 
-  const slide=document.getElementById('announcementSlide');
   const item=announcementItems[announcementIndex]||announcementItems[0];
+  const title=item.title||'Объявление';
+  const text=item.text||'';
+  const counter=(announcementIndex+1)+' из '+announcementItems.length;
+  document.getElementById('announcementTitle').textContent=title;
+  document.getElementById('announcementText').textContent=text;
+  document.getElementById('announcementCounter').textContent=counter;
+  document.getElementById('rotationAnnouncementTitle').textContent=title;
+  document.getElementById('rotationAnnouncementText').textContent=text;
+  document.getElementById('rotationAnnouncementCounter').textContent=counter;
+}
 
-  slide.classList.add('changing');
-
-  setTimeout(()=>{
-    document.getElementById('announcementTitle').textContent=item.title||'Объявление';
-    document.getElementById('announcementText').textContent=item.text||'';
-    document.getElementById('announcementCounter').textContent=
-      (announcementIndex+1)+' из '+announcementItems.length;
-    slide.classList.remove('changing');
-  },220);
+function advanceAnnouncement(){
+  if(announcementItems.length)announcementIndex=(announcementIndex+1)%announcementItems.length;
 }
 
 function setAnnouncements(items){
@@ -1741,23 +2008,14 @@ function setAnnouncements(items){
 
   announcementItems=next;
 
-  if(announcementIndex>=announcementItems.length){
+  if(beforeIds!==nextIds||announcementIndex>=announcementItems.length){
     announcementIndex=0;
   }
 
   renderAnnouncement();
 
-  if(beforeIds!==nextIds||!announcementTimer){
-    if(announcementTimer)clearInterval(announcementTimer);
-
-    if(announcementItems.length>1){
-      announcementTimer=setInterval(()=>{
-        announcementIndex=(announcementIndex+1)%announcementItems.length;
-        renderAnnouncement();
-      },15000);
-    }else{
-      announcementTimer=null;
-    }
+  if(!announcementItems.length&&document.getElementById('rotationAnnouncementScreen').classList.contains('active')){
+    showScreen(currentScreenIndex+1);
   }
 }
 
@@ -1940,9 +2198,12 @@ const WEATHER_URL='https://api.open-meteo.com/v1/forecast?latitude=54.7388&longi
 function updateHeaderDateTime(){
   const now=new Date();
   const months=['ЯНВАРЬ','ФЕВРАЛЬ','МАРТ','АПРЕЛЬ','МАЙ','ИЮНЬ','ИЮЛЬ','АВГУСТ','СЕНТЯБРЬ','ОКТЯБРЬ','НОЯБРЬ','ДЕКАБРЬ'];
-  document.getElementById('headerMonth').textContent=months[now.getMonth()]+' '+now.getFullYear();
-  document.getElementById('headerClock').textContent=
-    String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const month=months[now.getMonth()]+' '+now.getFullYear();
+  const time=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('headerMonth').textContent=month;
+  document.getElementById('headerClock').textContent=time;
+  document.getElementById('networkHeaderMonth').textContent=month;
+  document.getElementById('networkHeaderClock').textContent=time;
 }
 
 function weatherMeta(code){
@@ -1972,12 +2233,19 @@ async function loadWeather(){
     document.getElementById('weatherTemp').textContent=
       Math.round(Number(current.temperature_2m)||0)+'°';
     const feels=Number(current.apparent_temperature);
-    document.getElementById('weatherText').textContent=
-      meta.text+(Number.isFinite(feels)?' · ощущается '+Math.round(feels)+'°':'');
+    const temperature=Math.round(Number(current.temperature_2m)||0)+'°';
+    const weatherText=meta.text+(Number.isFinite(feels)?' · ощущается '+Math.round(feels)+'°':'');
+    document.getElementById('weatherText').textContent=weatherText;
+    document.getElementById('networkWeatherIcon').textContent=meta.icon;
+    document.getElementById('networkWeatherTemp').textContent=temperature;
+    document.getElementById('networkWeatherText').textContent=weatherText;
   }catch(err){
     document.getElementById('weatherIcon').textContent='◌';
     document.getElementById('weatherTemp').textContent='—°';
     document.getElementById('weatherText').textContent='Погода недоступна';
+    document.getElementById('networkWeatherIcon').textContent='◌';
+    document.getElementById('networkWeatherTemp').textContent='—°';
+    document.getElementById('networkWeatherText').textContent='Погода недоступна';
   }finally{
     clearTimeout(timeoutId);
   }
@@ -2046,6 +2314,7 @@ async function load(attempt=1){
 
     processBoardSnapshot(json.data);
     render(json.data);
+    updateNetworkRanking(json.data,cid);
     lastBoardLoadAt=Date.now();
     document.getElementById('error').style.display='none';
   }catch(e){
