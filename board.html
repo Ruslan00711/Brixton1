@@ -1335,15 +1335,23 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #networkScreen .network-weather-text{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 #networkScreen .network-updated{grid-column:1/-1;grid-row:2;text-align:right;font-size:9px;color:#6f7477;text-transform:uppercase;letter-spacing:.8px}
 #networkScreen .network-branches{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:0 0 auto}
-#networkScreen .network-branch-card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:11px;padding:8px 12px 10px;min-width:0}
-#networkScreen .network-branch-card.entuziastov{border-left-color:#72a9d8}
-#networkScreen .network-branch-name{font-family:'Bebas Neue';font-size:23px;letter-spacing:2px;margin-bottom:6px}
+#networkScreen .network-branch-card{--network-accent:var(--gold);background:var(--card);border:1px solid var(--line);border-left:4px solid var(--network-accent);border-radius:11px;padding:9px 12px 11px;min-width:0}
+#networkScreen .network-branch-card.entuziastov{--network-accent:#72a9d8}
+#networkScreen .network-branch-name{font-family:'Bebas Neue';font-size:24px;letter-spacing:2px;margin-bottom:6px}
 #networkScreen .network-branch-card.mendeleeva .network-branch-name{color:var(--gold)}
 #networkScreen .network-branch-card.entuziastov .network-branch-name{color:#8bc0eb}
 #networkScreen .network-branch-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
-#networkScreen .network-branch-metric{background:#111416;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:6px 8px;min-width:0}
-#networkScreen .network-branch-metric span{display:block;font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.55px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#networkScreen .network-branch-metric b{display:block;margin-top:2px;font-family:'Bebas Neue';font-size:22px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-branch-metric{background:#111416;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:7px 8px;min-width:0}
+#networkScreen .network-branch-metric>span{display:block;font-size:8.5px;color:#94999c;text-transform:uppercase;letter-spacing:.55px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-branch-value{display:flex;align-items:center;gap:5px;min-width:0;margin-top:2px}
+#networkScreen .network-branch-value b{display:block;font-family:'Bebas Neue';font-size:23px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-branch-metric:nth-child(1) .network-branch-value b,#networkScreen .network-branch-metric:nth-child(2) .network-branch-value b,#networkScreen .network-branch-metric:nth-child(4) .network-branch-value b{font-size:25px;letter-spacing:.65px}
+#networkScreen .network-progress{position:relative;height:3px;margin-top:3px;border-radius:999px;background:rgba(255,255,255,.075);overflow:visible}
+#networkScreen .network-progress-fill{display:block;height:100%;min-width:0;border-radius:inherit;background:var(--network-progress-color,var(--gold))}
+#networkScreen .network-progress-overflow{position:absolute;left:calc(100% + 2px);top:0;height:100%;max-width:10px;border-radius:999px;background:var(--network-progress-color,var(--gold));box-shadow:0 0 0 1px rgba(15,17,18,.9)}
+#networkScreen .network-branch-metric .network-progress{height:4px;margin-top:4px;--network-progress-color:var(--network-accent)}
+#networkScreen .network-branch-metric .network-progress.goods{height:5px;background:rgba(255,255,255,.12)}
+#networkScreen .network-metric-leader{flex:0 0 auto;padding:1px 2px 0;border:1px solid rgba(201,168,76,.24);border-radius:3px;color:#aa9862;font-size:5.5px;font-weight:800;line-height:1.2;letter-spacing:.25px;opacity:.7}
 #networkScreen .network-ranking-card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0;flex:1}
 #networkScreen .network-ranking-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:7px 13px 5px;border-bottom:1px solid var(--line)}
 #networkScreen .network-ranking-heading h2{margin:0;font-family:'Bebas Neue';font-size:24px;letter-spacing:2.5px;color:var(--gold)}
@@ -1366,9 +1374,19 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #networkScreen .network-branch-dot.entuziastov{background:#72a9d8}
 #networkScreen .network-service-revenue{font-weight:900;color:#fff}
 #networkScreen .network-plan{font-weight:800;color:var(--gold)}
+#networkScreen .network-cell-value{display:flex;align-items:center;justify-content:flex-end;gap:5px;min-width:0;line-height:1.05}
+#networkScreen .network-ranking .network-progress{margin:3px 2px 0;--network-progress-color:#91a5ad}
+#networkScreen .network-ranking .network-progress.clients{--network-progress-color:#82abc2}
+#networkScreen .network-ranking .network-progress.services{--network-progress-color:var(--gold)}
+#networkScreen .network-ranking .network-progress.goods{height:4px;background:rgba(183,172,212,.13);--network-progress-color:#b7acd4;box-shadow:0 0 0 1px rgba(183,172,212,.06)}
+#networkScreen .network-ranking .network-progress.plan{--network-progress-color:#78a985}
 #networkScreen .network-leader{background:linear-gradient(90deg,rgba(201,168,76,.24),rgba(201,168,76,.05));box-shadow:inset 4px 0 0 var(--gold)}
 #networkScreen .network-leader .network-rank,#networkScreen .network-leader .network-master{color:#f4d77e}
 #networkScreen .network-trophy{font-size:.85em;margin-right:5px;color:var(--gold)}
+#networkScreen .network-second{background:linear-gradient(90deg,rgba(190,198,203,.075),transparent 48%);box-shadow:inset 2px 0 0 rgba(190,198,203,.55)}
+#networkScreen .network-third{background:linear-gradient(90deg,rgba(176,127,87,.07),transparent 42%);box-shadow:inset 2px 0 0 rgba(176,127,87,.5)}
+#networkScreen .network-second .network-rank{color:#c7cdd0}
+#networkScreen .network-third .network-rank{color:#bd8d68}
 #networkScreen .network-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px}
 
 /* ===== Полноэкранное объявление в общей ротации ===== */
@@ -1381,7 +1399,7 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #announcementScreen .announcement-screen-footer{display:flex;align-items:center;gap:14px;font-size:clamp(16px,1.3vw,24px);color:rgba(255,255,255,.52)}
 #announcementScreen .announcement-screen-dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
 @media(max-height:700px){#announcementScreen{padding:24px 52px}#announcementScreen .announcement-screen-content{gap:14px}#announcementScreen .announcement-screen-title{font-size:clamp(40px,7vh,68px)}#announcementScreen .announcement-screen-text{font-size:clamp(22px,4vh,38px)}}
-@media(max-height:760px){#networkScreen{padding:5px 7px;gap:5px}#networkScreen .network-top{height:48px;grid-template-columns:190px minmax(170px,1fr) 170px 95px minmax(210px,auto);grid-template-rows:34px 11px}#networkScreen .network-logo{font-size:29px}#networkScreen .network-title{font-size:22px}#networkScreen .network-month{font-size:18px}#networkScreen .network-clock{font-size:27px}#networkScreen .network-branch-card{padding:5px 8px 6px}#networkScreen .network-branch-name{font-size:18px;margin-bottom:3px}#networkScreen .network-branch-metric{padding:3px 5px}#networkScreen .network-branch-metric b{font-size:17px}#networkScreen .network-ranking-heading{padding:4px 9px 3px}#networkScreen .network-ranking-heading h2{font-size:19px}#networkScreen .network-ranking th{height:22px;font-size:7px;padding:2px 3px}#networkScreen .network-ranking td{font-size:10px;padding:2px 3px}}
+@media(max-height:760px){#networkScreen{padding:5px 7px;gap:5px}#networkScreen .network-top{height:48px;grid-template-columns:190px minmax(170px,1fr) 170px 95px minmax(210px,auto);grid-template-rows:34px 11px}#networkScreen .network-logo{font-size:29px}#networkScreen .network-title{font-size:22px}#networkScreen .network-month{font-size:18px}#networkScreen .network-clock{font-size:27px}#networkScreen .network-branch-card{padding:5px 8px 6px}#networkScreen .network-branch-name{font-size:18px;margin-bottom:3px}#networkScreen .network-branch-metric{padding:3px 5px}#networkScreen .network-branch-value b{font-size:17px}#networkScreen .network-ranking-heading{padding:4px 9px 3px}#networkScreen .network-ranking-heading h2{font-size:19px}#networkScreen .network-ranking th{height:22px;font-size:7px;padding:2px 3px}#networkScreen .network-ranking td{font-size:10px;padding:2px 3px}#networkScreen .network-ranking .network-progress{margin-top:2px}}
 
 
 /* ===== График администраторов: одна компактная строка на весь месяц ===== */
@@ -1963,31 +1981,58 @@ function fitNetworkRankingRows(){
   document.getElementById('networkScreen').style.setProperty('--network-row-height',Math.max(24,Math.min(54,Math.floor(available/count)))+'px');
 }
 
+function networkProgressHtml(value,maxValue,kind){
+  const numeric=Number(value);
+  const maximum=Number(maxValue);
+  const raw=Number.isFinite(numeric)&&Number.isFinite(maximum)&&maximum>0?Math.max(0,numeric/maximum*100):0;
+  const width=Math.min(100,raw);
+  const overflow=kind==='plan'&&raw>100?Math.min(10,(raw-100)/5):0;
+  return '<div class="network-progress '+kind+'" aria-hidden="true">'+
+    '<span class="network-progress-fill" style="width:'+width.toFixed(1)+'%"></span>'+
+    (overflow?'<span class="network-progress-overflow" style="width:'+overflow.toFixed(1)+'px"></span>':'')+
+  '</div>';
+}
+
+function networkLeaderMarker(isLeader,label){
+  return isLeader?'<span class="network-metric-leader" title="'+escapeNetworkHtml(label)+'" aria-label="'+escapeNetworkHtml(label)+'">MAX</span>':'';
+}
+
 function renderNetworkRanking(){
   if(!networkRankingState.ready)return;
+  const branchMax={
+    clients:Math.max(0,...networkRankingState.branches.map(branch=>Number(branch.clients)||0)),
+    services:Math.max(0,...networkRankingState.branches.map(branch=>Number(branch.services)||0)),
+    goods:Math.max(0,...networkRankingState.branches.map(branch=>Number(branch.goods)||0))
+  };
   const branches=document.getElementById('networkBranches');
   branches.innerHTML=networkRankingState.branches.map(branch=>
     '<section class="network-branch-card '+branch.className+'">'+
       '<div class="network-branch-name">'+escapeNetworkHtml(branch.name)+'</div>'+
       '<div class="network-branch-metrics">'+
-        '<div class="network-branch-metric"><span>Клиентов за месяц</span><b>'+branch.clients+'</b></div>'+
-        '<div class="network-branch-metric"><span>Выручка услуг</span><b>'+shortRub(branch.services)+'</b></div>'+
-        '<div class="network-branch-metric"><span>Продажи товаров</span><b>'+shortRub(branch.goods)+'</b></div>'+
-        '<div class="network-branch-metric"><span>Выполнение плана</span><b>'+(branch.planPercent===null?'—':branch.planPercent+'%')+'</b></div>'+
+        '<div class="network-branch-metric"><span>Клиентов за месяц</span><div class="network-branch-value"><b>'+branch.clients+'</b></div>'+networkProgressHtml(branch.clients,branchMax.clients,'clients')+'</div>'+
+        '<div class="network-branch-metric"><span>Выручка услуг</span><div class="network-branch-value"><b>'+shortRub(branch.services)+'</b></div>'+networkProgressHtml(branch.services,branchMax.services,'services')+'</div>'+
+        '<div class="network-branch-metric"><span>Продажи товаров</span><div class="network-branch-value"><b>'+shortRub(branch.goods)+'</b></div>'+networkProgressHtml(branch.goods,branchMax.goods,'goods')+'</div>'+
+        '<div class="network-branch-metric"><span>Выполнение плана</span><div class="network-branch-value"><b>'+(branch.planPercent===null?'—':branch.planPercent+'%')+'</b></div>'+networkProgressHtml(branch.planPercent,100,'plan')+'</div>'+
       '</div>'+
     '</section>'
   ).join('');
 
   const body=document.getElementById('networkRankingBody');
+  const masterMax={
+    clients:Math.max(0,...networkRankingState.masters.map(master=>Number(master.clients)||0)),
+    services:Math.max(0,...networkRankingState.masters.map(master=>Number(master.servicesRevenue)||0)),
+    goods:Math.max(0,...networkRankingState.masters.map(master=>Number(master.goodsRevenue)||0)),
+    plan:Math.max(0,...networkRankingState.masters.map(master=>master.planPercent===null?0:Number(master.planPercent)||0))
+  };
   body.innerHTML=networkRankingState.masters.length?networkRankingState.masters.map((master,index)=>
-    '<tr class="'+(index===0?'network-leader':'')+'">'+
+    '<tr class="'+(index===0?'network-leader':index===1?'network-second':index===2?'network-third':'')+'">'+
       '<td class="network-rank">'+(index===0?'<span class="network-trophy" aria-label="Первое место">🏆</span>':'')+(index+1)+'</td>'+
       '<td class="network-master">'+escapeNetworkHtml(master.name)+'</td>'+
       '<td><span class="network-branch-label"><span class="network-branch-dot '+master.branchClass+'"></span>'+escapeNetworkHtml(master.branchName)+'</span></td>'+
-      '<td>'+master.clients+'</td>'+
-      '<td class="network-service-revenue">'+shortRub(master.servicesRevenue)+'</td>'+
-      '<td>'+shortRub(master.goodsRevenue)+'</td>'+
-      '<td class="network-plan">'+(master.planPercent===null?'—':master.planPercent+'%')+'</td>'+
+      '<td><div class="network-cell-value">'+master.clients+networkLeaderMarker(masterMax.clients>0&&Number(master.clients)===masterMax.clients,'Лучший по клиентам')+'</div>'+networkProgressHtml(master.clients,masterMax.clients,'clients')+'</td>'+
+      '<td class="network-service-revenue"><div class="network-cell-value">'+shortRub(master.servicesRevenue)+networkLeaderMarker(masterMax.services>0&&Number(master.servicesRevenue)===masterMax.services,'Лучший по выручке услуг')+'</div>'+networkProgressHtml(master.servicesRevenue,masterMax.services,'services')+'</td>'+
+      '<td><div class="network-cell-value">'+shortRub(master.goodsRevenue)+networkLeaderMarker(masterMax.goods>0&&Number(master.goodsRevenue)===masterMax.goods,'Лучший по товарам')+'</div>'+networkProgressHtml(master.goodsRevenue,masterMax.goods,'goods')+'</td>'+
+      '<td class="network-plan"><div class="network-cell-value">'+(master.planPercent===null?'—':master.planPercent+'%')+networkLeaderMarker(master.planPercent!==null&&masterMax.plan>0&&Number(master.planPercent)===masterMax.plan,'Лучший процент выполнения плана')+'</div>'+networkProgressHtml(master.planPercent,100,'plan')+'</td>'+
     '</tr>'
   ).join(''):'<tr><td colspan="7"><div class="network-empty">Данные мастеров обновляются…</div></td></tr>';
 
