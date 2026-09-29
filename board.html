@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ru">
 <head>
@@ -1289,7 +1288,11 @@ body{
 #scheduleScreen .schedule-appt.sp{background:#c8c8e8;border-left-color:#6666aa;border-top-color:#8888bb;border-right-color:#8888bb;border-bottom-color:#8888bb;z-index:2}
 #scheduleScreen .schedule-appt.early{background:#ffe066;border-left-color:#b38a00;border-top-color:#d4a800;border-right-color:#d4a800;border-bottom-color:#d4a800;z-index:2}
 #scheduleScreen .schedule-appt.now-slot{border-color:var(--gold)!important}
+#scheduleScreen .schedule-appt-time-row{display:flex;align-items:baseline;justify-content:space-between;gap:4px;padding-right:18px;min-width:0}
 #scheduleScreen .schedule-appt-time{font-family:'Bebas Neue',sans-serif;line-height:1}
+#scheduleScreen .schedule-appt-confirmation{flex:0 0 auto;max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:800;line-height:1.1;letter-spacing:0}
+#scheduleScreen .schedule-appt-confirmation.confirmed{color:#08702f}
+#scheduleScreen .schedule-appt-confirmation.unconfirmed{color:#a30808}
 #scheduleScreen .schedule-appt.sv .schedule-appt-time{color:#073a18}#scheduleScreen .schedule-appt.sc .schedule-appt-time{color:#4a0000}#scheduleScreen .schedule-appt.sp .schedule-appt-time{color:#222244}#scheduleScreen .schedule-appt.early .schedule-appt-time{color:#5a3d00}
 #scheduleScreen .schedule-appt-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #scheduleScreen .schedule-appt.sv .schedule-appt-name{color:#052a10}#scheduleScreen .schedule-appt.sc .schedule-appt-name{color:#380000}#scheduleScreen .schedule-appt.sp .schedule-appt-name{color:#111133}#scheduleScreen .schedule-appt.early .schedule-appt-name{color:#3a2800}
@@ -1369,13 +1372,15 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #networkScreen .network-empty{height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px}
 
 /* ===== Полноэкранное объявление в общей ротации ===== */
-#rotationAnnouncementScreen{background:#0f1112;color:#fff;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,96px)}
-#rotationAnnouncementScreen::before{content:'';position:absolute;inset:clamp(18px,2vw,38px);border:2px solid rgba(201,168,76,.42);border-radius:24px;pointer-events:none}
-#rotationAnnouncementScreen .rotation-announcement-content{position:relative;width:min(1500px,90vw);text-align:center;display:flex;flex-direction:column;align-items:center;gap:clamp(20px,3vh,42px)}
-#rotationAnnouncementScreen .rotation-announcement-label{font-family:'Bebas Neue';font-size:clamp(24px,2.2vw,42px);letter-spacing:.22em;color:var(--gold)}
-#rotationAnnouncementScreen .rotation-announcement-title{font-family:'Bebas Neue';font-size:clamp(48px,5.6vw,104px);line-height:1;letter-spacing:.035em;overflow-wrap:anywhere}
-#rotationAnnouncementScreen .rotation-announcement-text{max-width:1200px;font-size:clamp(26px,2.8vw,52px);font-weight:700;line-height:1.22;white-space:pre-wrap;overflow-wrap:anywhere;color:rgba(255,255,255,.9)}
-#rotationAnnouncementScreen .rotation-announcement-counter{font-size:clamp(15px,1.2vw,22px);color:rgba(255,255,255,.52)}
+#announcementScreen{background:#0f1112;color:#fff;font-family:'Mulish',sans-serif;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:clamp(28px,5vw,96px)}
+#announcementScreen::before{content:'';position:absolute;inset:clamp(18px,2vw,38px);border:2px solid rgba(201,168,76,.42);border-radius:24px;pointer-events:none}
+#announcementScreen .announcement-screen-content{position:relative;width:min(1500px,90vw);text-align:center;display:flex;flex-direction:column;align-items:center;gap:clamp(20px,3vh,42px)}
+#announcementScreen .announcement-screen-label{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,2.2vw,42px);letter-spacing:.22em;color:var(--gold)}
+#announcementScreen .announcement-screen-title{max-width:100%;font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,6.3vw,118px);line-height:.95;letter-spacing:.035em;color:#fff;overflow-wrap:anywhere}
+#announcementScreen .announcement-screen-text{max-width:1200px;font-size:clamp(28px,3vw,56px);font-weight:700;line-height:1.22;white-space:pre-wrap;overflow-wrap:anywhere;color:rgba(255,255,255,.9)}
+#announcementScreen .announcement-screen-footer{display:flex;align-items:center;gap:14px;font-size:clamp(16px,1.3vw,24px);color:rgba(255,255,255,.52)}
+#announcementScreen .announcement-screen-dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+@media(max-height:700px){#announcementScreen{padding:24px 52px}#announcementScreen .announcement-screen-content{gap:14px}#announcementScreen .announcement-screen-title{font-size:clamp(40px,7vh,68px)}#announcementScreen .announcement-screen-text{font-size:clamp(22px,4vh,38px)}}
 @media(max-height:760px){#networkScreen{padding:5px 7px;gap:5px}#networkScreen .network-top{height:48px;grid-template-columns:190px minmax(170px,1fr) 170px 95px minmax(210px,auto);grid-template-rows:34px 11px}#networkScreen .network-logo{font-size:29px}#networkScreen .network-title{font-size:22px}#networkScreen .network-month{font-size:18px}#networkScreen .network-clock{font-size:27px}#networkScreen .network-branch-card{padding:5px 8px 6px}#networkScreen .network-branch-name{font-size:18px;margin-bottom:3px}#networkScreen .network-branch-metric{padding:3px 5px}#networkScreen .network-branch-metric b{font-size:17px}#networkScreen .network-ranking-heading{padding:4px 9px 3px}#networkScreen .network-ranking-heading h2{font-size:19px}#networkScreen .network-ranking th{height:22px;font-size:7px;padding:2px 3px}#networkScreen .network-ranking td{font-size:10px;padding:2px 3px}}
 
 
@@ -1434,7 +1439,108 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
   .admin-day-value{font-size:7px}
 }
 
+/* ===== TV Board viewport-height guard =====
+   Финальный responsive-слой: календарь и правая колонка всегда остаются
+   внутри фактической высоты экрана, без вертикальной прокрутки. */
+html,
+body,
+#dashboardScreen{
+  height:100vh!important;
+  height:100dvh!important;
+  max-height:100vh!important;
+  max-height:100dvh!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+#dashboardScreen .grid,
+#dashboardScreen .left,
+#dashboardScreen .days-block,
+#dashboardScreen .days-wrap,
+#dashboardScreen .side,
+#dashboardScreen .kpi-card,
+#dashboardScreen .kpi-list{
+  min-height:0!important;
+}
+#dashboardScreen .days-wrap{
+  flex:1 1 0!important;
+  overflow:hidden!important;
+}
+#dashboardScreen .days-wrap .days{
+  height:auto!important;
+  max-height:100%!important;
+}
+#dashboardScreen .days-wrap .days tbody tr:not(.today-row):not(.total-row),
+#dashboardScreen .days-wrap .days tbody tr:not(.today-row):not(.total-row) td{
+  height:var(--day-row-h)!important;
+  min-height:var(--day-row-h)!important;
+  max-height:var(--day-row-h)!important;
+  line-height:1!important;
+  font-size:var(--day-font)!important;
+  padding:0 2px!important;
+}
+#dashboardScreen .days-wrap .days tbody tr.today-row,
+#dashboardScreen .days-wrap .days tbody tr.today-row td{
+  height:var(--today-row-h)!important;
+  min-height:var(--today-row-h)!important;
+  max-height:var(--today-row-h)!important;
+  line-height:1!important;
+  font-size:var(--today-font)!important;
+  padding:1px 3px!important;
+}
+#dashboardScreen .days-wrap .days tbody tr.total-row,
+#dashboardScreen .days-wrap .days tbody tr.total-row td{
+  height:var(--total-row-h)!important;
+  min-height:var(--total-row-h)!important;
+  max-height:var(--total-row-h)!important;
+  line-height:1!important;
+  font-size:var(--total-font)!important;
+  padding:1px 2px!important;
+}
+#dashboardScreen .side{
+  overflow:hidden!important;
+  grid-template-rows:max-content minmax(0,1fr)!important;
+}
+#dashboardScreen .kpi-list{
+  grid-template-rows:repeat(var(--kpi-count,5),minmax(0,1fr))!important;
+  overflow:hidden!important;
+}
+#dashboardScreen .kpi-master{
+  min-height:0!important;
+}
+
+@media (max-height:760px){
+  #dashboardScreen{padding:5px 7px!important;gap:4px!important}
+  #dashboardScreen .top{height:40px!important;min-height:40px!important}
+  #dashboardScreen .card h2{padding-top:2px!important;padding-bottom:2px!important}
+  #dashboardScreen .summary th{padding-top:3px!important;padding-bottom:3px!important}
+  #dashboardScreen .summary td{padding-top:2px!important;padding-bottom:2px!important}
+  #dashboardScreen .days-title{padding-top:2px!important;padding-bottom:1px!important}
+  #dashboardScreen .side{gap:4px!important}
+  #dashboardScreen .side > .card:first-child .metrics{padding:3px 5px 4px!important;gap:2px!important}
+  #dashboardScreen .side > .card:first-child .metric{padding:3px 5px!important}
+  #dashboardScreen .side > .card:first-child .val,
+  #dashboardScreen .side > .card:first-child .progress-percent{font-size:20px!important}
+  #dashboardScreen .kpi-list{gap:3px!important;padding:4px 5px 5px!important}
+  #dashboardScreen .kpi-master{padding:3px 5px!important}
+}
+
+@media (max-height:660px){
+  #dashboardScreen{padding:4px 6px!important;gap:3px!important}
+  #dashboardScreen .top{height:36px!important;min-height:36px!important}
+  #dashboardScreen .logo{font-size:24px!important}
+  #dashboardScreen .branch{font-size:19px!important}
+  #dashboardScreen .header-month{font-size:17px!important}
+  #dashboardScreen .header-clock{font-size:24px!important}
+  #dashboardScreen .summary th{font-size:8px!important;padding:2px 1px!important}
+  #dashboardScreen .summary td{font-size:8.5px!important;padding:1px!important}
+  #dashboardScreen .live-status{font-size:7px!important;margin-top:1px!important}
+  #dashboardScreen .admin-month-strip{flex-basis:27px;height:27px;margin-bottom:2px}
+  #dashboardScreen .kpi-name{font-size:18px!important}
+  #dashboardScreen .kpi-row{margin-top:0!important}
+}
+
 </style>
+<script src="/legacy-assets/tv-auth.js"></script>
 </head>
 <body>
 <div class="tv-screen active" id="dashboardScreen">
@@ -1454,7 +1560,7 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 <div class="grid">
   <section class="card left">
     <div><h2>Клиенты</h2><div class="summary-wrap"><table class="summary"><thead><tr><th>Мастер</th><th>За месяц</th><th>Новые мастеру</th><th>Абс. новые</th><th>Сегодня</th><th>Пост.</th><th>Новые</th></tr></thead><tbody id="masters"></tbody></table></div></div>
-    <div class="days-block"><div class="days-title"><span>Клиенты по дням</span><span class="day-norm" id="dayNorm">Норма: —</span><span class="days-month" id="daysMonth" style="display:none">—</span></div><div class="days-wrap"><table class="days"><thead id="daysHead"></thead><tbody id="daysBody"></tbody></table></div><div class="admin-month-strip" id="adminMonthStrip" aria-label="График администраторов"></div><div class="announcement-panel hidden" id="announcementPanel"><div class="announcement-head"><span class="announcement-label">Объявления BRIXTON</span><span class="announcement-counter" id="announcementCounter">—</span></div><div class="announcement-body"><div class="announcement-slide" id="announcementSlide"><div class="announcement-title" id="announcementTitle">—</div><div class="announcement-text" id="announcementText">—</div></div></div></div></div>
+    <div class="days-block"><div class="days-title"><span>Клиенты по дням</span><span class="day-norm" id="dayNorm">Норма: —</span><span class="days-month" id="daysMonth" style="display:none">—</span></div><div class="days-wrap"><table class="days"><thead id="daysHead"></thead><tbody id="daysBody"></tbody></table></div><div class="admin-month-strip" id="adminMonthStrip" aria-label="График администраторов"></div></div>
   </section>
   <div class="side">
     <section class="card"><h2>План месяца</h2><div class="metrics">
@@ -1534,12 +1640,12 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
   <div class="schedule-bottom"></div>
 </div>
 
-<div class="tv-screen" id="rotationAnnouncementScreen" aria-live="polite">
-  <div class="rotation-announcement-content">
-    <div class="rotation-announcement-label">ОБЪЯВЛЕНИЕ BRIXTON</div>
-    <div class="rotation-announcement-title" id="rotationAnnouncementTitle">—</div>
-    <div class="rotation-announcement-text" id="rotationAnnouncementText">—</div>
-    <div class="rotation-announcement-counter" id="rotationAnnouncementCounter">—</div>
+<div class="tv-screen" id="announcementScreen" aria-live="polite">
+  <div class="announcement-screen-content">
+    <div class="announcement-screen-label">ОБЪЯВЛЕНИЕ BRIXTON</div>
+    <div class="announcement-screen-title" id="announcementTitle">—</div>
+    <div class="announcement-screen-text" id="announcementText">—</div>
+    <div class="announcement-screen-footer"><span class="announcement-screen-dot"></span><span id="announcementCounter">—</span></div>
   </div>
 </div>
 
@@ -1577,6 +1683,13 @@ function scheduleStatusIcon(value,paid){
   if(value===1)return{c:'sv',i:'<span style="'+style+'background:#1a7a38;color:#fff">'+(paid?'+':'')+'</span>'};
   if(value===-1)return{c:'sc',i:'<span style="'+style+'background:#aa1111;color:#fff">−</span>'};
   return{c:'sp',i:'<span style="'+style+'background:#6666aa;color:#fff">·</span>'};
+}
+function scheduleConfirmationStatus(value){
+  if(value===undefined||value===null||value==='')return null;
+  const normalized=Number(value);
+  if(normalized===2)return{className:'confirmed',text:'Подтвердил'};
+  if(normalized===0)return{className:'unconfirmed',text:'Не подтвердил'};
+  return null;
 }
 function scheduleIsNow(time){
   const now=new Date(),parts=time.split(':').map(Number),start=new Date(now);
@@ -1658,13 +1771,15 @@ function renderSchedule(list){
       const top=scheduleTimeToY(appt.time),duration=appt.duration||60,height=Math.max(duration/60*scheduleHour,28)-2;
       const end=scheduleAddMinutes(appt.time,duration);
       const status=scheduleStatusIcon(appt.visit,appt.paid);
+      const confirmation=scheduleConfirmationStatus(appt.visit);
       if(scheduleIsEarly(appt.time,appt.visit))status.c='early';
       const nowClass=(scheduleIsNow(appt.time)&&appt.visit!==-1)?' now-slot':'';
       const services=(appt.services||[]).join(', ')||'—';
       const badge=appt.isNew?'<span class="schedule-badge-new">NEW</span>':'<span class="schedule-badge-v">'+appt.visits+'v</span>';
       const card=document.createElement('div');
       card.className='schedule-appt '+status.c+nowClass;card.style.top=(top+1)+'px';card.style.height=height+'px';
-      card.innerHTML='<div class="schedule-appt-time">'+appt.time+' — '+end+'</div><div class="schedule-appt-name">'+appt.clientName+badge+'</div><div class="schedule-appt-svc">'+services+'</div><div class="schedule-appt-icon">'+status.i+'</div>';
+      const confirmationHtml=confirmation?'<span class="schedule-appt-confirmation '+confirmation.className+'">'+confirmation.text+'</span>':'';
+      card.innerHTML='<div class="schedule-appt-time-row"><span class="schedule-appt-time">'+appt.time+' — '+end+'</span>'+confirmationHtml+'</div><div class="schedule-appt-name">'+appt.clientName+badge+'</div><div class="schedule-appt-svc">'+services+'</div><div class="schedule-appt-icon">'+status.i+'</div>';
       body.appendChild(card);cards.push({element:card,height});
     });
     column.appendChild(body);cols.appendChild(column);
@@ -1694,13 +1809,13 @@ function showScheduleError(){
 const dashboardScreen={id:'dashboardScreen',duration:60000,show(){requestAnimationFrame(fitDaysTable)},hide(){}};
 const networkScreen={id:'networkScreen',duration:30000,show(){renderNetworkRanking()},hide(){}};
 const scheduleScreen={id:'scheduleScreen',duration:30000,show(){updateScheduleHeader();if(scheduleState.data)renderSchedule(scheduleState.data)},hide(){const line=document.getElementById('schedule-now-line');if(line)line.style.display='none'}};
-const announcementScreen={id:'rotationAnnouncementScreen',duration:15000,show(){renderAnnouncement()},hide(){advanceAnnouncement()}};
+const announcementScreen={id:'announcementScreen',duration:15000,show(){renderAnnouncement()},hide(){advanceAnnouncement()}};
 const screens=[dashboardScreen,networkScreen,scheduleScreen,announcementScreen];
 let currentScreenIndex=0;
 let screenSwitchTimer=null;
 function screenAvailable(screen){
   if(screen.id==='networkScreen')return networkRankingState.ready;
-  if(screen.id==='rotationAnnouncementScreen')return announcementItems.length>0;
+  if(screen.id==='announcementScreen')return announcementItems.length>0;
   return true;
 }
 function nextAvailableScreenIndex(index){
@@ -1733,7 +1848,7 @@ updateScheduleHeader();
 </script>
 
 <script>
-const API='https://script.google.com/macros/s/AKfycbyqfD8xsp2rkX0eEASg2FoYXbtYpzXlC4TeXoS09RRDjvLDAG6UCNQqcLodVWG5oebzdA/exec';
+const API='/legacy-api';
 const BR={mendeleeva:'694866',entuziastov:'1076318'};
 const NETWORK_BRANCHES=[
   {id:'694866',name:'Менделеева',className:'mendeleeva'},
@@ -1881,32 +1996,30 @@ function renderNetworkRanking(){
   requestAnimationFrame(fitNetworkRankingRows);
 }
 
-async function requestNetworkBranch(companyId){
+async function requestNetworkBranches(){
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),30000);
   try{
-    const response=await fetch(API+'?action=getTvBoard&company_id='+companyId+'&_='+Date.now(),{cache:'no-store',redirect:'follow',signal:controller.signal});
+    const response=await brixtonTvFetch(API+'?action=getNetworkTvBoard',{signal:controller.signal});
     const text=await response.text();
     if(!response.ok)throw new Error('HTTP '+response.status);
     const trimmed=text.trim();
     if(!trimmed||trimmed[0]==='<')throw new Error('Invalid board response');
     const json=JSON.parse(trimmed);
-    if(!json.success||!json.data)throw new Error(json.error||'Network board unavailable');
-    return Object.assign({},json.data,{branchId:String(companyId)});
+    if(!json.success||!json.data||!Array.isArray(json.data.branches))throw new Error(json.error||'Network board unavailable');
+    return json.data.branches;
   }finally{
     clearTimeout(timeoutId);
   }
 }
 
-async function updateNetworkRanking(currentData,currentBranchId=cid){
+async function updateNetworkRanking(currentBranchId=cid){
   if(networkRankingState.loading)return;
   networkRankingState.loading=true;
   try{
-    const normalizedCurrentData=Object.assign({},currentData,{branchId:String(currentBranchId)});
-    const other=NETWORK_BRANCHES.find(branch=>branch.id!==String(currentBranchId));
-    if(!other)throw new Error('Current branch is outside network scope');
-    const otherData=await requestNetworkBranch(other.id);
-    const ranking=buildNetworkRanking([normalizedCurrentData,otherData]);
+    if(!NETWORK_BRANCHES.some(branch=>branch.id===String(currentBranchId)))throw new Error('Current branch is outside network scope');
+    const payloads=await requestNetworkBranches();
+    const ranking=buildNetworkRanking(payloads);
     if(ranking.branches.length!==NETWORK_BRANCHES.length)throw new Error('Incomplete network data');
     networkRankingState.branches=ranking.branches;
     networkRankingState.masters=ranking.masters;
@@ -1973,29 +2086,18 @@ let announcementItems=[];
 let announcementIndex=0;
 
 function renderAnnouncement(){
-  const panel=document.getElementById('announcementPanel');
-
-  if(!announcementItems.length){
-    panel.classList.add('hidden');
-    return;
-  }
-
-  panel.classList.remove('hidden');
-
+  if(!announcementItems.length)return;
   const item=announcementItems[announcementIndex]||announcementItems[0];
-  const title=item.title||'Объявление';
-  const text=item.text||'';
-  const counter=(announcementIndex+1)+' из '+announcementItems.length;
-  document.getElementById('announcementTitle').textContent=title;
-  document.getElementById('announcementText').textContent=text;
-  document.getElementById('announcementCounter').textContent=counter;
-  document.getElementById('rotationAnnouncementTitle').textContent=title;
-  document.getElementById('rotationAnnouncementText').textContent=text;
-  document.getElementById('rotationAnnouncementCounter').textContent=counter;
+  document.getElementById('announcementTitle').textContent=item.title||'Объявление';
+  document.getElementById('announcementText').textContent=item.text||'';
+  document.getElementById('announcementCounter').textContent=
+    (announcementIndex+1)+' из '+announcementItems.length;
 }
 
 function advanceAnnouncement(){
-  if(announcementItems.length)announcementIndex=(announcementIndex+1)%announcementItems.length;
+  if(announcementItems.length){
+    announcementIndex=(announcementIndex+1)%announcementItems.length;
+  }
 }
 
 function setAnnouncements(items){
@@ -2012,10 +2114,9 @@ function setAnnouncements(items){
     announcementIndex=0;
   }
 
-  renderAnnouncement();
-
-  if(!announcementItems.length&&document.getElementById('rotationAnnouncementScreen').classList.contains('active')){
-    showScreen(currentScreenIndex+1);
+  if(document.getElementById('announcementScreen').classList.contains('active')){
+    if(announcementItems.length)renderAnnouncement();
+    else showScreen(currentScreenIndex+1);
   }
 }
 
@@ -2035,19 +2136,29 @@ function fitDaysTable(){
   const headHeight=(table.tHead&&table.tHead.getBoundingClientRect().height)||24;
 
   const compact=window.innerHeight<=900;
+  const shortViewport=window.innerHeight<=660;
   const maxRegular=compact?36:46;
-  const minRegular=compact?11:13;
-  const todayHeight=compact?42:54;
-  const totalHeight=todayHeight;
-  const safety=6;
+  const minRegular=shortViewport?4:(window.innerHeight<=760?7:(compact?9:11));
+  const todayWeight=todayRow?1.45:0;
+  const totalWeight=totalRow?1.25:0;
+  const safety=4;
+  const available=Math.max(0,wrapHeight-headHeight-safety);
+  const rowUnits=Math.max(1,regularCount+todayWeight+totalWeight);
+  let rowHeight=Math.max(minRegular,Math.min(maxRegular,Math.floor(available/rowUnits)));
+  let todayHeight=todayRow?Math.max(rowHeight,Math.round(rowHeight*todayWeight)):0;
+  let totalHeight=totalRow?Math.max(rowHeight,Math.round(rowHeight*totalWeight)):0;
 
-  const free=Math.max(0,wrapHeight-headHeight-todayHeight-totalHeight-safety);
-  const calculated=regularCount>0?Math.floor(free/regularCount):maxRegular;
-  const rowHeight=Math.max(minRegular,Math.min(maxRegular,calculated));
+  /* Округление и очень низкий viewport не должны вытолкнуть итоговую строку. */
+  const fittedHeight=()=>regularCount*rowHeight+todayHeight+totalHeight;
+  while(rowHeight>3&&fittedHeight()>available){
+    rowHeight-=1;
+    todayHeight=todayRow?Math.max(rowHeight,Math.round(rowHeight*todayWeight)):0;
+    totalHeight=totalRow?Math.max(rowHeight,Math.round(rowHeight*totalWeight)):0;
+  }
 
-  const regularFont=Math.max(compact?7:8,Math.min(compact?16:18,Math.floor(rowHeight*.43)));
-  const todayFont=Math.max(compact?15:17,Math.min(compact?21:24,Math.floor(todayHeight*.45)));
-  const totalFont=todayFont;
+  const regularFont=Math.max(shortViewport?5:(compact?7:8),Math.min(compact?16:18,Math.floor(rowHeight*.65)));
+  const todayFont=Math.max(shortViewport?7:(compact?10:12),Math.min(compact?21:24,Math.floor(todayHeight*.7)));
+  const totalFont=Math.max(shortViewport?7:(compact?9:11),Math.min(compact?20:23,Math.floor(totalHeight*.7)));
 
   wrap.style.setProperty('--day-row-h',rowHeight+'px');
   wrap.style.setProperty('--today-row-h',todayHeight+'px');
@@ -2297,7 +2408,7 @@ async function load(attempt=1){
   const timeoutId=setTimeout(()=>boardRequestController.abort(),30000);
   try{
     const url=API+'?action=getTvBoard&company_id='+cid+'&_='+Date.now();
-    const response=await fetch(url,{cache:'no-store',redirect:'follow',signal:boardRequestController.signal});
+    const response=await brixtonTvFetch(url,{signal:boardRequestController.signal});
     const text=await response.text();
 
     if(!response.ok){
@@ -2314,7 +2425,7 @@ async function load(attempt=1){
 
     processBoardSnapshot(json.data);
     render(json.data);
-    updateNetworkRanking(json.data,cid);
+    updateNetworkRanking(cid);
     lastBoardLoadAt=Date.now();
     document.getElementById('error').style.display='none';
   }catch(e){
@@ -2403,7 +2514,7 @@ async function checkNewClientEvents(){
   scheduleRequestController=new AbortController();
   const timeoutId=setTimeout(()=>scheduleRequestController.abort(),20000);
   try{
-    const response=await fetch(EVENT_SCHEDULE_API+'&_='+Date.now(),{cache:'no-store',signal:scheduleRequestController.signal});
+    const response=await brixtonTvFetch(EVENT_SCHEDULE_API,{signal:scheduleRequestController.signal});
     if(!response.ok)return;
     const json=await response.json();
     if(!json||!json.success||!Array.isArray(json.data))return;

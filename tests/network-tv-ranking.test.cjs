@@ -96,12 +96,23 @@ test('fresh payload values replace prior monthly figures on every rebuild',()=>{
 test('rotation order and timing include network and optional announcements',()=>{
   assert.match(html,/const networkScreen=\{id:'networkScreen',duration:30000/);
   assert.match(html,/const screens=\[dashboardScreen,networkScreen,scheduleScreen,announcementScreen\]/);
-  assert.match(html,/const announcementScreen=\{id:'rotationAnnouncementScreen',duration:15000/);
-  assert.match(html,/if\(screen\.id==='rotationAnnouncementScreen'\)return announcementItems\.length>0/);
+  assert.match(html,/const announcementScreen=\{id:'announcementScreen',duration:15000/);
+  assert.match(html,/if\(screen\.id==='announcementScreen'\)return announcementItems\.length>0/);
 });
 
-test('both numeric branch links are accepted without changing branch calculations',()=>{
+test('auth-aware baseline and both numeric branch links are preserved',()=>{
   assert.match(html,/const cid=BR\[key\]\|\|\(\/\^\\d\+\$\/\.test\(key\)\?key:BR\.mendeleeva\)/);
   assert.equal((html.match(/function render\(d\)/g)||[]).length,1);
-  assert.match(html,/Object\.assign\(\{\},json\.data,\{branchId:String\(companyId\)\}\)/);
+  assert.match(html,/<script src="\/legacy-assets\/tv-auth\.js"><\/script>/);
+  assert.match(html,/const API='\/legacy-api'/);
+  assert.match(html,/brixtonTvFetch\(API\+'\?action=getNetworkTvBoard'/);
+  assert.doesNotMatch(html,/script\.google\.com\/macros/);
+});
+
+test('production confirmation status and announcement screen remain intact',()=>{
+  assert.match(html,/function scheduleConfirmationStatus\(value\)/);
+  assert.match(html,/normalized===2.*Подтвердил/);
+  assert.match(html,/normalized===0.*Не подтвердил/);
+  assert.match(html,/id="announcementScreen"/);
+  assert.match(html,/function advanceAnnouncement\(\)/);
 });
