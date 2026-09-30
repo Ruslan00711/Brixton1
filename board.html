@@ -50,6 +50,7 @@ table{width:100%;border-collapse:collapse;table-layout:fixed}th{font-size:11px;c
 .kpi-master:last-child{border-bottom:1px solid rgba(255,255,255,.06)}
 .kpi-master.kpi-leader{border-color:rgba(201,168,76,.55);box-shadow:0 0 0 1px rgba(201,168,76,.12) inset}
 .kpi-master.kpi-leader .kpi-name::before{content:'🏆 ';font-size:12px}
+.kpi-master.kpi-leader .kpi-name::after{content:'лидер по плану';margin-left:7px;font-size:8px;letter-spacing:.5px;text-transform:uppercase;color:var(--gold);opacity:.72}
 .kpi-track span.pct-low{background:var(--red)!important}
 .kpi-track span.pct-mid{background:var(--yellow)!important}
 .kpi-track span.pct-good{background:var(--green)!important}
@@ -1883,6 +1884,17 @@ function sortMasters(list){
     return String(a.name||'').localeCompare(String(b.name||''),'ru');
   });
 }
+function sortKpiMastersByServicesRevenue(list){
+  return (Array.isArray(list)?list:[]).slice().sort((a,b)=>{
+    const revenueDelta=(Number(b&&b.servicesTotal)||0)-(Number(a&&a.servicesTotal)||0);
+    if(revenueDelta!==0)return revenueDelta;
+    return String(a&&a.name||'').localeCompare(String(b&&b.name||''),'ru');
+  });
+}
+function servicesPlanPercent(master){
+  const goal=Number(master&&master.servicesGoal)||0;
+  return goal>0?Math.round((Number(master&&master.servicesTotal)||0)/goal*100):0;
+}
 
 const p=new URLSearchParams(location.search);const key=(p.get('branch')||'mendeleeva').toLowerCase();const cid=BR[key]||(/^\d+$/.test(key)?key:BR.mendeleeva);
 const manualBrowserMode=p.get('manual')==='1';
@@ -2246,7 +2258,7 @@ function renderAdminMonthStrip(d){
 
 function render(d){
  d.masters=sortMasters(d.masters);
- d.kpiMasters=sortMasters(d.kpiMasters);
+ d.kpiMasters=sortKpiMastersByServicesRevenue(d.kpiMasters);
  setAnnouncements(d.announcements);
  document.getElementById('daysMonth').textContent=monthLabelFromData(d);
  renderAdminMonthStrip(d);
@@ -2304,20 +2316,15 @@ function render(d){
 
  const kpiMasters=Array.isArray(d.kpiMasters)?d.kpiMasters:[];
  document.getElementById('kpiList').style.setProperty('--kpi-count',Math.max(1,kpiMasters.length));
- const kpiScores=kpiMasters.map(m=>{
-   const sg=Number(m.servicesGoal)||0, gg=Number(m.goodsGoal)||0;
-   const sp=sg>0?(Number(m.servicesTotal)||0)/sg*100:0;
-   const gp=gg>0?(Number(m.goodsTotal)||0)/gg*100:0;
-   return Math.max(sp,gp);
- });
- const bestKpi=kpiScores.length?Math.max(...kpiScores):0;
+ const servicesPlanScores=kpiMasters.map(servicesPlanPercent);
+ const bestServicesPlan=servicesPlanScores.length?Math.max(...servicesPlanScores):0;
  document.getElementById('kpiList').innerHTML=kpiMasters.map((m,idx)=>{
    const servicesGoal=Number(m.servicesGoal)||0;
    const goodsGoal=Number(m.goodsGoal)||0;
    const servicesTotal=Number(m.servicesTotal)||0;
    const goodsTotal=Number(m.goodsTotal)||0;
 
-   const servicesPct=servicesGoal>0?Math.round(servicesTotal/servicesGoal*100):0;
+   const servicesPct=servicesPlanPercent(m);
    const goodsPct=goodsGoal>0?Math.round(goodsTotal/goodsGoal*100):0;
 
    const servicesWidth=servicesGoal>0?Math.min(100,servicesPct):0;
@@ -2331,7 +2338,7 @@ function render(d){
      ? '<b>'+shortRub(goodsTotal)+'</b> / '+shortRub(goodsGoal)+' · '+goodsPct+'%'
      : '<span class="kpi-no-goal">цель не задана</span>';
 
-   const leader=bestKpi>0&&kpiScores[idx]===bestKpi?' kpi-leader':'';
+   const leader=bestServicesPlan>0&&servicesPlanScores[idx]===bestServicesPlan?' kpi-leader':'';
    return '<div class="kpi-master'+leader+'">'+
      '<div class="kpi-name" title="'+m.name+'">'+shortName(m.name)+'</div>'+
      '<div class="kpi-row services">'+
