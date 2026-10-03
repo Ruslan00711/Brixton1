@@ -46,6 +46,16 @@ test('an existing branch-scoped TV token can read only the fixed two-branch netw
   assert.deepEqual(Array.from(result.data.branches,branch=>String(branch.branchId)),['694866','1076318']);
 });
 
+test('the authenticated POST gate routes network TV reads instead of rejecting the device token',()=>{
+  const {context,calls}=authRuntime();
+  const result=context.legacyAuthPostGate_({postData:{contents:JSON.stringify({
+    action:'getNetworkTvBoard',organization_id:'6a778c5d-e8be-49b5-a273-130691b3116f',company_id:'694866',deviceToken:token
+  })}});
+  assert.equal(result.success,true);
+  assert.deepEqual(Array.from(calls),['694866','1076318']);
+  assert.equal(result.data.branches.length,2);
+});
+
 test('network read reuses tv.board.read and does not mutate or replace device sessions',()=>{
   assert.match(authSource,/var boardAction = body\.action === 'getTvBoard' \|\| body\.action === 'getNetworkTvBoard'/);
   assert.match(authSource,/var scope = boardAction \? 'tv\.board\.read' : 'tv\.schedule\.read'/);
