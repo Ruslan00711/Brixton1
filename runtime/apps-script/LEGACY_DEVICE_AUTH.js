@@ -4,9 +4,10 @@ var LEGACY_TV_BRANCHES_ = ['694866', '1076318'];
 var LEGACY_TV_BRANCH_IDS_ = {'694866':'1bb7d94c-2fd4-4867-adc0-3cf62e7ae822','1076318':'1e86f90b-db21-4f8b-a44b-a20bfc5a83f1'};
 var LEGACY_TV_PREFIX_ = 'BRIXTON_TV_DEVICE_V1_';
 var LEGACY_FREE_SLOTS_PREFIX_ = 'BRIXTON_FREE_SLOTS_DEVICE_V1_';
-var LEGACY_AUTH_REVISION_ = 'tv-network-ranking-20260929-v1';
+var LEGACY_AUTH_REVISION_ = 'tv-network-ranking-restored-20261003-v1';
 var LEGACY_TV_TTL_MS_ = 365 * 24 * 60 * 60 * 1000;
 var LEGACY_FREE_SLOTS_TTL_MS_ = 180 * 24 * 60 * 60 * 1000;
+var LEGACY_TV_MONTH_KEYS_ = ['january','february','march','april','may','june','july','august','september','october','november','december'];
 
 function legacyAuthFailure_(code) {
   return jsonResponse_({success:false, error:code});
@@ -38,6 +39,72 @@ function legacyTvRequireAdmin_(body) {
   // The established legacy secret remains authoritative; OWNER tokens are never accepted.
   requireAdminToken_(body.adminToken);
 }
+function legacyTvNormalizeMasterName_(value) {
+  return String(value || '').toLowerCase().replace(/ё/g, 'е').replace(/[^a-zа-я0-9]+/g, '');
+}
+function legacyTvBase3Months_(now) {
+  var date = now instanceof Date ? now : new Date();
+  var year = date.getUTCFullYear();
+  var month = date.getUTCMonth();
+  if (!(now instanceof Date)) {
+    var localPeriod = Utilities.formatDate(date, 'Asia/Yekaterinburg', 'yyyy-MM').split('-');
+    year = Number(localPeriod[0]);
+    month = Number(localPeriod[1]) - 1;
+  }
+  var months = [];
+  for (var offset = 5; offset >= 0; offset--) {
+    var point = new Date(Date.UTC(year, month - offset, 1));
+    var pointYear = point.getUTCFullYear();
+    var pointMonth = point.getUTCMonth();
+    months.push({
+      period: String(pointYear) + '-' + String(pointMonth + 1).padStart(2, '0'),
+      storeKey: LEGACY_TV_MONTH_KEYS_[pointMonth] + '_' + pointYear
+    });
+  }
+  return months;
+}
+function legacyTvBase3History_(branches, now) {
+  var months = legacyTvBase3Months_(now);
+  var result = {months:months.map(function(item) { return item.period; }), masters:[]};
+  var row;
+  try {
+    var select = months.map(function(item, index) {
+      return 'base3m' + index + ':data->months->' + item.storeKey + '->barbers';
+    }).join(',');
+    row = fetchStoreProjection_(select);
+  } catch (_) {
+    return result;
+  }
+  var valuesByMaster = {};
+  var branchIdByName = {'Менделеева':'694866','Энтузиастов':'1076318'};
+  months.forEach(function(item, index) {
+    var barbers = Array.isArray(row && row['base3m' + index]) ? row['base3m' + index] : [];
+    barbers.forEach(function(barber) {
+      var branchId = branchIdByName[String(barber && barber.loc || '')];
+      var normalizedName = legacyTvNormalizeMasterName_(barber && barber.name);
+      if (!branchId || !normalizedName) return;
+      var value = Number(barber && barber.active_clients && barber.active_clients.b3);
+      if (!isFinite(value) || value < 0 || Math.floor(value) !== value) return;
+      var key = branchId + ':' + normalizedName;
+      if (!valuesByMaster[key]) valuesByMaster[key] = Array(months.length).fill(null);
+      valuesByMaster[key][index] = value;
+    });
+  });
+  (branches || []).forEach(function(branch) {
+    var branchId = String(branch && branch.branchId || '');
+    (Array.isArray(branch && branch.masters) ? branch.masters : []).forEach(function(master) {
+      var name = String(master && master.name || '').trim();
+      var values = valuesByMaster[branchId + ':' + legacyTvNormalizeMasterName_(name)];
+      if (!name || !values) return;
+      result.masters.push({
+        branchId:branchId,
+        name:name,
+        values:months.map(function(item, index) { return {month:item.period, value:values[index]}; })
+      });
+    });
+  });
+  return result;
+}
 function legacyTvRead_(body) {
   var companyId = legacyTvScope_(body);
   if (typeof body.deviceToken !== 'string' || !/^btv1_[a-f0-9]{64}$/.test(body.deviceToken))
@@ -59,7 +126,7 @@ function legacyTvRead_(body) {
       if (!board || String(board.branchId) !== branchCompanyId) throw new Error('DEVICE_SOURCE_SCOPE_MISMATCH');
       return board;
     });
-    return jsonResponse_({success:true, data:{branches:branches}});
+    return jsonResponse_({success:true, data:{branches:branches, base3History:legacyTvBase3History_(branches)}});
   }
   var data = body.action === 'getTvBoard' ? doGetTvBoard(companyId) : doGetTablo(companyId, '');
   if (body.action === 'getTvBoard' && (!data || String(data.branchId) !== companyId)) throw new Error('DEVICE_SOURCE_SCOPE_MISMATCH');

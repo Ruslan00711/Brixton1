@@ -27,7 +27,9 @@ function rankingRuntime(){
       {id:'1076318',name:'Энтузиастов',className:'entuziastov'}
     ];
     ${readFunction('normalizeNetworkMasterName')}
+    ${readFunction('escapeNetworkHtml')}
     ${readFunction('buildNetworkRanking')}
+    ${readFunction('networkBase3SparklineHtml')}
   `,context);
   return context;
 }
@@ -58,11 +60,32 @@ test('network ranking uses both existing branch payloads and sorts strictly by s
     ],[
       {name:'Сергей',servicesTotal:240000,goodsTotal:11000,servicesGoal:200000}
     ],{services:240000,goods:11000,clients:20,goal:40})
-  ]);
+  ],{masters:[
+    {branchId:'694866',name:'Антон',values:[{month:'2026-05',value:20},{month:'2026-06',value:21},{month:'2026-07',value:23},{month:'2026-08',value:24},{month:'2026-09',value:26},{month:'2026-10',value:28}]},
+    {branchId:'1076318',name:'Сергей',values:[{month:'2026-05',value:42},{month:'2026-06',value:41},{month:'2026-07',value:40},{month:'2026-08',value:39},{month:'2026-09',value:38},{month:'2026-10',value:37}]}
+  ]});
   assert.deepEqual(Array.from(result.masters,master=>master.name),['Сергей','Борис','Антон']);
   assert.deepEqual(Array.from(result.masters,master=>master.servicesRevenue),[240000,180000,120000]);
   assert.deepEqual(Array.from(result.masters,master=>master.planPercent),[120,90,80]);
+  assert.deepEqual(Array.from(result.masters[0].base3History,point=>point.value),[42,41,40,39,38,37]);
+  assert.deepEqual(Array.from(result.masters[2].base3History,point=>point.value),[20,21,23,24,26,28]);
   assert.deepEqual(Array.from(result.branches,branch=>branch.planPercent),[80,50]);
+});
+
+test('compact Base 3+ sparkline shows six labelled points and the six-month direction',()=>{
+  const runtime=rankingRuntime();
+  const growth=runtime.networkBase3SparklineHtml([
+    {month:'2026-05',value:20},{month:'2026-06',value:24},{month:'2026-07',value:29},
+    {month:'2026-08',value:28},{month:'2026-09',value:26},{month:'2026-10',value:27}
+  ]);
+  assert.match(growth,/network-base3-spark up/);
+  assert.equal((growth.match(/class="point"/g)||[]).length,6);
+  assert.equal((growth.match(/class="value-label"/g)||[]).length,6);
+  assert.match(growth,/>20<\/text>/);
+  assert.match(growth,/>27<\/text>/);
+  assert.doesNotMatch(growth,/network-base3-value|↗|↘/);
+  assert.match(growth,/2026-05: 20/);
+  assert.match(runtime.networkBase3SparklineHtml([]),/>—</);
 });
 
 test('duplicate active master rows are removed within a branch',()=>{
@@ -98,6 +121,14 @@ test('rotation order and timing include network and optional announcements',()=>
   assert.match(html,/const screens=\[dashboardScreen,networkScreen,scheduleScreen,announcementScreen\]/);
   assert.match(html,/const announcementScreen=\{id:'announcementScreen',duration:15000/);
   assert.match(html,/if\(screen\.id==='announcementScreen'\)return announcementItems\.length>0/);
+});
+
+test('network table keeps revenue sort and adds Base 3+ immediately after branch',()=>{
+  assert.match(html,/<th>Филиал<\/th><th>База 3\+ · 6 мес\.<\/th><th>Клиентов<\/th>/);
+  assert.match(html,/masters\.sort\(\(a,b\)=>b\.servicesRevenue-a\.servicesRevenue/);
+  assert.match(html,/networkBase3SparklineHtml\(master\.base3History\)/);
+  assert.match(html,/network-base3-spark \.trend\{fill:none/);
+  assert.doesNotMatch(html,/network-base3-spark\.(?:up|down|flat) \.trend\{[^}]*fill:/);
 });
 
 test('auth-aware baseline and both numeric branch links are preserved',()=>{
