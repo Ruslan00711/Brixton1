@@ -83,8 +83,14 @@ test('compact Base 3+ sparkline shows six labelled points and the six-month dire
   assert.equal((growth.match(/class="value-label"/g)||[]).length,6);
   assert.match(growth,/>20<\/text>/);
   assert.match(growth,/>27<\/text>/);
-  assert.doesNotMatch(growth,/network-base3-value|↗|↘/);
+  assert.match(growth,/network-base3-delta up">↑ \+7/);
   assert.match(growth,/2026-05: 20/);
+  assert.match(runtime.networkBase3SparklineHtml([
+    {month:'2026-05',value:20},{month:'2026-10',value:21}
+  ]),/network-base3-spark flat/);
+  assert.match(runtime.networkBase3SparklineHtml([
+    {month:'2026-05',value:20},{month:'2026-10',value:18}
+  ]),/network-base3-delta down">↓ -2/);
   assert.match(runtime.networkBase3SparklineHtml([]),/>—</);
 });
 
