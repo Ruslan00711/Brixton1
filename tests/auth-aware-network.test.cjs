@@ -28,7 +28,7 @@ function authRuntime(){
     }}},
     LockService:{getScriptLock(){return{tryLock(){return true;},releaseLock(){}};}},
     jsonResponse_(value){return value;},
-    fetchStoreProjection_(){
+    fetchAnalyticsProjection_(){
       const result={};
       for(let index=0;index<6;index++)result['base3m'+index]=[
         {name:'Виталий',loc:'Менделеева',active_clients:{b3:40+index,b3_list:[{phone:'+70000000000'}]}},

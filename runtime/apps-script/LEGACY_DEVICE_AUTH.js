@@ -71,7 +71,7 @@ function legacyTvBase3History_(branches, now) {
     var select = months.map(function(item, index) {
       return 'base3m' + index + ':data->months->' + item.storeKey + '->barbers';
     }).join(',');
-    row = fetchStoreProjection_(select);
+    row = fetchAnalyticsProjection_(select);
   } catch (_) {
     return result;
   }
