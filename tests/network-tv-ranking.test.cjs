@@ -63,12 +63,17 @@ test('network ranking uses both existing branch payloads and sorts strictly by s
   ],{masters:[
     {branchId:'694866',name:'Антон',values:[{month:'2026-05',value:20},{month:'2026-06',value:21},{month:'2026-07',value:23},{month:'2026-08',value:24},{month:'2026-09',value:26},{month:'2026-10',value:28}]},
     {branchId:'1076318',name:'Сергей',values:[{month:'2026-05',value:42},{month:'2026-06',value:41},{month:'2026-07',value:40},{month:'2026-08',value:39},{month:'2026-09',value:38},{month:'2026-10',value:37}]}
+  ]},{masters:[
+    {branchId:'694866',name:'Антон',values:[{month:'2026-05',value:8},{month:'2026-06',value:9},{month:'2026-07',value:10},{month:'2026-08',value:11},{month:'2026-09',value:12},{month:'2026-10',value:13}]},
+    {branchId:'1076318',name:'Сергей',values:[{month:'2026-05',value:20},{month:'2026-06',value:19},{month:'2026-07',value:18},{month:'2026-08',value:17},{month:'2026-09',value:16},{month:'2026-10',value:15}]}
   ]});
   assert.deepEqual(Array.from(result.masters,master=>master.name),['Сергей','Борис','Антон']);
   assert.deepEqual(Array.from(result.masters,master=>master.servicesRevenue),[240000,180000,120000]);
   assert.deepEqual(Array.from(result.masters,master=>master.planPercent),[120,90,80]);
   assert.deepEqual(Array.from(result.masters[0].base3History,point=>point.value),[42,41,40,39,38,37]);
   assert.deepEqual(Array.from(result.masters[2].base3History,point=>point.value),[20,21,23,24,26,28]);
+  assert.deepEqual(Array.from(result.masters[0].base7History,point=>point.value),[20,19,18,17,16,15]);
+  assert.deepEqual(Array.from(result.masters[2].base7History,point=>point.value),[8,9,10,11,12,13]);
   assert.deepEqual(Array.from(result.branches,branch=>branch.planPercent),[80,50]);
 });
 
@@ -83,8 +88,14 @@ test('compact Base 3+ sparkline shows six labelled points and the six-month dire
   assert.equal((growth.match(/class="value-label"/g)||[]).length,6);
   assert.match(growth,/>20<\/text>/);
   assert.match(growth,/>27<\/text>/);
-  assert.doesNotMatch(growth,/network-base3-value|↗|↘/);
+  assert.match(growth,/network-base3-delta up">↑ \+7/);
   assert.match(growth,/2026-05: 20/);
+  assert.match(runtime.networkBase3SparklineHtml([
+    {month:'2026-05',value:20},{month:'2026-10',value:21}
+  ]),/network-base3-spark flat/);
+  assert.match(runtime.networkBase3SparklineHtml([
+    {month:'2026-05',value:20},{month:'2026-10',value:18}
+  ]),/network-base3-delta down">↓ -2/);
   assert.match(runtime.networkBase3SparklineHtml([]),/>—</);
 });
 
@@ -116,17 +127,18 @@ test('fresh payload values replace prior monthly figures on every rebuild',()=>{
   assert.equal(refreshed.branches[0].goods,8000);
 });
 
-test('rotation order and timing include network and optional announcements',()=>{
-  assert.match(html,/const networkScreen=\{id:'networkScreen',duration:30000/);
+test('rotation order and timing include one-minute network and optional announcements',()=>{
+  assert.match(html,/const networkScreen=\{id:'networkScreen',duration:60000/);
   assert.match(html,/const screens=\[dashboardScreen,networkScreen,scheduleScreen,announcementScreen\]/);
   assert.match(html,/const announcementScreen=\{id:'announcementScreen',duration:15000/);
   assert.match(html,/if\(screen\.id==='announcementScreen'\)return announcementItems\.length>0/);
 });
 
-test('network table keeps revenue sort and adds Base 3+ immediately after branch',()=>{
-  assert.match(html,/<th>Филиал<\/th><th>База 3\+ · 6 мес\.<\/th><th>Клиентов<\/th>/);
+test('network table keeps revenue sort and adds Base 3+ and Base 7+ after branch',()=>{
+  assert.match(html,/<th>Филиал<\/th><th>База 3\+ · 6 мес\.<\/th><th>База 7\+ · 6 мес\.<\/th><th>Клиентов<\/th>/);
   assert.match(html,/masters\.sort\(\(a,b\)=>b\.servicesRevenue-a\.servicesRevenue/);
   assert.match(html,/networkBase3SparklineHtml\(master\.base3History\)/);
+  assert.match(html,/networkBase3SparklineHtml\(master\.base7History\)/);
   assert.match(html,/network-base3-spark \.trend\{fill:none/);
   assert.doesNotMatch(html,/network-base3-spark\.(?:up|down|flat) \.trend\{[^}]*fill:/);
 });

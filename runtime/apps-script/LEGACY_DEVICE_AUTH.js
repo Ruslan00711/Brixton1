@@ -63,9 +63,13 @@ function legacyTvBase3Months_(now) {
   }
   return months;
 }
-function legacyTvBase3History_(branches, now) {
+function legacyTvBaseHistories_(branches, now) {
   var months = legacyTvBase3Months_(now);
-  var result = {months:months.map(function(item) { return item.period; }), masters:[]};
+  var monthLabels = months.map(function(item) { return item.period; });
+  var result = {
+    base3History:{months:monthLabels, masters:[]},
+    base7History:{months:monthLabels, masters:[]}
+  };
   var row;
   try {
     var select = months.map(function(item, index) {
@@ -75,7 +79,7 @@ function legacyTvBase3History_(branches, now) {
   } catch (_) {
     return result;
   }
-  var valuesByMaster = {};
+  var valuesByDepth = {b3:{}, b7:{}};
   var branchIdByName = {'Менделеева':'694866','Энтузиастов':'1076318'};
   months.forEach(function(item, index) {
     var barbers = Array.isArray(row && row['base3m' + index]) ? row['base3m' + index] : [];
@@ -83,23 +87,28 @@ function legacyTvBase3History_(branches, now) {
       var branchId = branchIdByName[String(barber && barber.loc || '')];
       var normalizedName = legacyTvNormalizeMasterName_(barber && barber.name);
       if (!branchId || !normalizedName) return;
-      var value = Number(barber && barber.active_clients && barber.active_clients.b3);
-      if (!isFinite(value) || value < 0 || Math.floor(value) !== value) return;
       var key = branchId + ':' + normalizedName;
-      if (!valuesByMaster[key]) valuesByMaster[key] = Array(months.length).fill(null);
-      valuesByMaster[key][index] = value;
+      ['b3','b7'].forEach(function(depth) {
+        var value = Number(barber && barber.active_clients && barber.active_clients[depth]);
+        if (!isFinite(value) || value < 0 || Math.floor(value) !== value) return;
+        if (!valuesByDepth[depth][key]) valuesByDepth[depth][key] = Array(months.length).fill(null);
+        valuesByDepth[depth][key][index] = value;
+      });
     });
   });
   (branches || []).forEach(function(branch) {
     var branchId = String(branch && branch.branchId || '');
     (Array.isArray(branch && branch.masters) ? branch.masters : []).forEach(function(master) {
       var name = String(master && master.name || '').trim();
-      var values = valuesByMaster[branchId + ':' + legacyTvNormalizeMasterName_(name)];
-      if (!name || !values) return;
-      result.masters.push({
-        branchId:branchId,
-        name:name,
-        values:months.map(function(item, index) { return {month:item.period, value:values[index]}; })
+      if (!name) return;
+      ['b3','b7'].forEach(function(depth) {
+        var values = valuesByDepth[depth][branchId + ':' + legacyTvNormalizeMasterName_(name)];
+        if (!values) return;
+        result[depth === 'b3' ? 'base3History' : 'base7History'].masters.push({
+          branchId:branchId,
+          name:name,
+          values:months.map(function(item, index) { return {month:item.period, value:values[index]}; })
+        });
       });
     });
   });
@@ -126,7 +135,8 @@ function legacyTvRead_(body) {
       if (!board || String(board.branchId) !== branchCompanyId) throw new Error('DEVICE_SOURCE_SCOPE_MISMATCH');
       return board;
     });
-    return jsonResponse_({success:true, data:{branches:branches, base3History:legacyTvBase3History_(branches)}});
+    var histories = legacyTvBaseHistories_(branches);
+    return jsonResponse_({success:true, data:{branches:branches, base3History:histories.base3History, base7History:histories.base7History}});
   }
   var data = body.action === 'getTvBoard' ? doGetTvBoard(companyId) : doGetTablo(companyId, '');
   if (body.action === 'getTvBoard' && (!data || String(data.branchId) !== companyId)) throw new Error('DEVICE_SOURCE_SCOPE_MISMATCH');

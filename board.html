@@ -1343,15 +1343,15 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #networkScreen .network-branch-card.entuziastov .network-branch-name{color:#8bc0eb}
 #networkScreen .network-branch-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
 #networkScreen .network-branch-metric{background:#111416;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:7px 8px;min-width:0}
-#networkScreen .network-branch-metric>span{display:block;font-size:8.5px;color:#94999c;text-transform:uppercase;letter-spacing:.55px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#networkScreen .network-branch-metric>span{display:block;font-size:9.5px;color:#a2a7aa;text-transform:uppercase;letter-spacing:.55px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #networkScreen .network-branch-value{display:flex;align-items:center;gap:5px;min-width:0;margin-top:2px}
 #networkScreen .network-branch-value b{display:block;font-family:'Bebas Neue';font-size:23px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #networkScreen .network-branch-metric:nth-child(1) .network-branch-value b,#networkScreen .network-branch-metric:nth-child(2) .network-branch-value b,#networkScreen .network-branch-metric:nth-child(4) .network-branch-value b{font-size:25px;letter-spacing:.65px}
-#networkScreen .network-progress{position:relative;height:3px;margin-top:3px;border-radius:999px;background:rgba(255,255,255,.075);overflow:visible}
+#networkScreen .network-progress{position:relative;height:5px;margin-top:4px;border-radius:999px;background:rgba(255,255,255,.12);overflow:visible}
 #networkScreen .network-progress-fill{display:block;height:100%;min-width:0;border-radius:inherit;background:var(--network-progress-color,var(--gold))}
 #networkScreen .network-progress-overflow{position:absolute;left:calc(100% + 2px);top:0;height:100%;max-width:10px;border-radius:999px;background:var(--network-progress-color,var(--gold));box-shadow:0 0 0 1px rgba(15,17,18,.9)}
-#networkScreen .network-branch-metric .network-progress{height:4px;margin-top:4px;--network-progress-color:var(--network-accent)}
-#networkScreen .network-branch-metric .network-progress.goods{height:5px;background:rgba(255,255,255,.12)}
+#networkScreen .network-branch-metric .network-progress{height:6px;margin-top:5px;--network-progress-color:var(--network-accent)}
+#networkScreen .network-branch-metric .network-progress.goods{height:6px;background:rgba(255,255,255,.15)}
 #networkScreen .network-metric-leader{flex:0 0 auto;padding:1px 2px 0;border:1px solid rgba(201,168,76,.24);border-radius:3px;color:#aa9862;font-size:5.5px;font-weight:800;line-height:1.2;letter-spacing:.25px;opacity:.7}
 #networkScreen .network-ranking-card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-height:0;flex:1}
 #networkScreen .network-ranking-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:7px 13px 5px;border-bottom:1px solid var(--line)}
@@ -1359,35 +1359,39 @@ body{padding:0!important;display:block!important;gap:0!important;background:#0f1
 #networkScreen .network-ranking-heading span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
 #networkScreen .network-ranking-wrap{flex:1;min-height:0;overflow:hidden;padding:0 9px 7px}
 #networkScreen .network-ranking{height:100%;table-layout:fixed}
-#networkScreen .network-ranking th{height:29px;padding:4px 5px;font-size:9px}
+#networkScreen .network-ranking th{height:29px;padding:4px 5px;font-size:10px}
 #networkScreen .network-ranking td{height:var(--network-row-height,44px);padding:3px 5px;font-size:clamp(11px,1.25vh,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#networkScreen .network-ranking th:nth-child(1),#networkScreen .network-ranking td:nth-child(1){width:6%;text-align:center}
-#networkScreen .network-ranking th:nth-child(2),#networkScreen .network-ranking td:nth-child(2){width:18%;text-align:left}
-#networkScreen .network-ranking th:nth-child(3),#networkScreen .network-ranking td:nth-child(3){width:13%;text-align:left}
-#networkScreen .network-ranking th:nth-child(4),#networkScreen .network-ranking td:nth-child(4){width:15%}
-#networkScreen .network-ranking th:nth-child(5),#networkScreen .network-ranking td:nth-child(5){width:10%}
-#networkScreen .network-ranking th:nth-child(6),#networkScreen .network-ranking td:nth-child(6){width:17%}
-#networkScreen .network-ranking th:nth-child(7),#networkScreen .network-ranking td:nth-child(7){width:12%}
-#networkScreen .network-ranking th:nth-child(8),#networkScreen .network-ranking td:nth-child(8){width:9%}
+#networkScreen .network-ranking th:nth-child(1),#networkScreen .network-ranking td:nth-child(1){width:5%;text-align:center}
+#networkScreen .network-ranking th:nth-child(2),#networkScreen .network-ranking td:nth-child(2){width:14%;text-align:left}
+#networkScreen .network-ranking th:nth-child(3),#networkScreen .network-ranking td:nth-child(3){width:10%;text-align:left}
+#networkScreen .network-ranking th:nth-child(4),#networkScreen .network-ranking td:nth-child(4),#networkScreen .network-ranking th:nth-child(5),#networkScreen .network-ranking td:nth-child(5){width:14%}
+#networkScreen .network-ranking th:nth-child(6),#networkScreen .network-ranking td:nth-child(6){width:8%}
+#networkScreen .network-ranking th:nth-child(7),#networkScreen .network-ranking td:nth-child(7){width:14%}
+#networkScreen .network-ranking th:nth-child(8),#networkScreen .network-ranking td:nth-child(8){width:11%}
+#networkScreen .network-ranking th:nth-child(9),#networkScreen .network-ranking td:nth-child(9){width:10%}
 #networkScreen .network-rank{font-family:'Bebas Neue';font-size:1.25em;color:#bbb}
-#networkScreen .network-master{font-weight:800}
-#networkScreen .network-branch-label{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:.8em;font-weight:700;color:#c3c7ca}
+#networkScreen .network-master{font-size:1.08em;font-weight:800}
+#networkScreen .network-branch-label{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:.86em;font-weight:700;color:#cbd0d3}
 #networkScreen .network-branch-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:0 0 auto}
 #networkScreen .network-branch-dot.entuziastov{background:#72a9d8}
 #networkScreen .network-service-revenue{font-weight:900;color:#fff}
 #networkScreen .network-plan{font-weight:800;color:var(--gold)}
 #networkScreen .network-cell-value{display:flex;align-items:center;justify-content:flex-end;gap:5px;min-width:0;line-height:1.05}
-#networkScreen .network-ranking .network-progress{margin:3px 2px 0;--network-progress-color:#91a5ad}
+#networkScreen .network-ranking .network-progress{height:5px;margin:4px 2px 0;--network-progress-color:#91a5ad}
 #networkScreen .network-ranking .network-progress.clients{--network-progress-color:#82abc2}
 #networkScreen .network-ranking .network-progress.services{--network-progress-color:var(--gold)}
-#networkScreen .network-ranking .network-progress.goods{height:4px;background:rgba(183,172,212,.13);--network-progress-color:#b7acd4;box-shadow:0 0 0 1px rgba(183,172,212,.06)}
+#networkScreen .network-ranking .network-progress.goods{height:5px;background:rgba(183,172,212,.18);--network-progress-color:#b7acd4;box-shadow:0 0 0 1px rgba(183,172,212,.08)}
 #networkScreen .network-ranking .network-progress.plan{--network-progress-color:#78a985}
 #networkScreen .network-base3{overflow:visible!important}
-#networkScreen .network-base3-inner{display:block;min-width:0}
+#networkScreen .network-base3-inner{display:grid;grid-template-columns:minmax(0,1fr) 38px;align-items:center;gap:3px;min-width:0}
 #networkScreen .network-base3-spark{display:block;width:100%;height:36px;overflow:visible}
-#networkScreen .network-base3-spark .trend{fill:none;stroke:var(--muted);stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+#networkScreen .network-base3-spark .trend{fill:none;stroke:var(--muted);stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 #networkScreen .network-base3-spark .point{stroke:none}
-#networkScreen .network-base3-spark .value-label{fill:#dfe5e2;stroke:#15191a;stroke-width:2.4px;paint-order:stroke fill;font-size:8px;font-weight:800;text-anchor:middle}
+#networkScreen .network-base3-spark .value-label{fill:#eef3f0;stroke:#15191a;stroke-width:2.6px;paint-order:stroke fill;font-size:9.5px;font-weight:800;text-anchor:middle}
+#networkScreen .network-base3-delta{font-family:'Bebas Neue';font-size:12px;font-weight:800;letter-spacing:.25px;text-align:right;white-space:nowrap}
+#networkScreen .network-base3-delta.up{color:var(--green)}
+#networkScreen .network-base3-delta.down{color:var(--red)}
+#networkScreen .network-base3-delta.flat{color:#a8b0b3}
 #networkScreen .network-base3-spark.up .trend{stroke:var(--green)}
 #networkScreen .network-base3-spark.up .point{fill:var(--green)}
 #networkScreen .network-base3-spark.down .trend{stroke:var(--red)}
@@ -1636,7 +1640,7 @@ body,
     <div class="network-ranking-heading"><h2>Все мастера BRIXTON</h2><span>сортировка по выручке услуг за текущий месяц</span></div>
     <div class="network-ranking-wrap">
       <table class="network-ranking">
-        <thead><tr><th>Место</th><th>Мастер</th><th>Филиал</th><th>База 3+ · 6 мес.</th><th>Клиентов</th><th>Выручка услуг</th><th>Продажи товаров</th><th>План, %</th></tr></thead>
+        <thead><tr><th>Место</th><th>Мастер</th><th>Филиал</th><th>База 3+ · 6 мес.</th><th>База 7+ · 6 мес.</th><th>Клиентов</th><th>Выручка услуг</th><th>Продажи товаров</th><th>План, %</th></tr></thead>
         <tbody id="networkRankingBody"></tbody>
       </table>
     </div>
@@ -1839,7 +1843,7 @@ function showScheduleError(){
 }
 
 const dashboardScreen={id:'dashboardScreen',duration:60000,show(){requestAnimationFrame(fitDaysTable)},hide(){}};
-const networkScreen={id:'networkScreen',duration:30000,show(){renderNetworkRanking()},hide(){}};
+const networkScreen={id:'networkScreen',duration:60000,show(){renderNetworkRanking()},hide(){}};
 const scheduleScreen={id:'scheduleScreen',duration:30000,show(){updateScheduleHeader();if(scheduleState.data)renderSchedule(scheduleState.data)},hide(){const line=document.getElementById('schedule-now-line');if(line)line.style.display='none'}};
 const announcementScreen={id:'announcementScreen',duration:15000,show(){renderAnnouncement()},hide(){advanceAnnouncement()}};
 const screens=[dashboardScreen,networkScreen,scheduleScreen,announcementScreen];
@@ -1936,21 +1940,26 @@ function escapeNetworkHtml(value){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-function buildNetworkRanking(payloads,base3History){
+function buildNetworkRanking(payloads,base3History,base7History){
   const branches=[];
   const masters=[];
   const seen=new Set();
-  const base3ByMaster=new Map();
-  (Array.isArray(base3History&&base3History.masters)?base3History.masters:[]).forEach(item=>{
-    const branchId=String(item&&item.branchId||'');
-    const normalizedName=normalizeNetworkMasterName(item&&item.name);
-    if(!branchId||!normalizedName)return;
-    const values=(Array.isArray(item.values)?item.values:[]).slice(-6).map(point=>({
-      month:/^\d{4}-(0[1-9]|1[0-2])$/.test(String(point&&point.month||''))?String(point.month):'',
-      value:Number.isInteger(Number(point&&point.value))&&Number(point.value)>=0?Number(point.value):null
-    }));
-    base3ByMaster.set(branchId+':'+normalizedName,values);
-  });
+  const historyByMaster=history=>{
+    const result=new Map();
+    (Array.isArray(history&&history.masters)?history.masters:[]).forEach(item=>{
+      const branchId=String(item&&item.branchId||'');
+      const normalizedName=normalizeNetworkMasterName(item&&item.name);
+      if(!branchId||!normalizedName)return;
+      const values=(Array.isArray(item.values)?item.values:[]).slice(-6).map(point=>({
+        month:/^\d{4}-(0[1-9]|1[0-2])$/.test(String(point&&point.month||''))?String(point.month):'',
+        value:Number.isInteger(Number(point&&point.value))&&Number(point.value)>=0?Number(point.value):null
+      }));
+      result.set(branchId+':'+normalizedName,values);
+    });
+    return result;
+  };
+  const base3ByMaster=historyByMaster(base3History);
+  const base7ByMaster=historyByMaster(base7History);
 
   NETWORK_BRANCHES.forEach(branch=>{
     const data=(payloads||[]).find(item=>String(item&&item.branchId)===branch.id);
@@ -1977,7 +1986,7 @@ function buildNetworkRanking(payloads,base3History){
         id:key,name:String(master.name).trim(),branchId:branch.id,branchName:branch.name,branchClass:branch.className,
         clients:Number(master.monthTotal)||0,servicesRevenue,goodsRevenue,
         planPercent:servicesGoal>0?Math.round(servicesRevenue/servicesGoal*100):null,
-        base3History:base3ByMaster.get(key)||[]
+        base3History:base3ByMaster.get(key)||[],base7History:base7ByMaster.get(key)||[]
       });
       kpiByName.delete(normalizedName);
     });
@@ -1992,7 +2001,8 @@ function buildNetworkRanking(payloads,base3History){
         id:key,name:String(kpi.name).trim(),branchId:branch.id,branchName:branch.name,branchClass:branch.className,
         clients:0,servicesRevenue,goodsRevenue:Number(kpi.goodsTotal)||0,
         planPercent:servicesGoal>0?Math.round(servicesRevenue/servicesGoal*100):null,
-        base3History:base3ByMaster.get(branch.id+':'+normalizedName)||[]
+        base3History:base3ByMaster.get(branch.id+':'+normalizedName)||[],
+        base7History:base7ByMaster.get(branch.id+':'+normalizedName)||[]
       });
     });
 
@@ -2042,22 +2052,23 @@ function networkBase3SparklineHtml(history){
     .filter(point=>Number.isInteger(point.value)&&point.value>=0);
   if(!finite.length)return '<span class="network-base3-empty">—</span>';
   const delta=finite[finite.length-1].value-finite[0].value;
-  const direction=delta>0?'up':delta<0?'down':'flat';
+  const direction=delta>1?'up':delta<-1?'down':'flat';
+  const deltaLabel=direction==='up'?'↑ +'+delta:direction==='down'?'↓ '+delta:'→ '+(delta>0?'+':'')+delta;
   const values=finite.map(point=>point.value);
   const minimum=Math.min(...values),maximum=Math.max(...values),range=Math.max(1,maximum-minimum);
   const coordinates=finite.map(point=>{
-    const x=points.length>1?15+point.index/(points.length-1)*230:130;
+    const x=points.length>1?15+point.index/(points.length-1)*190:110;
     const y=30-(point.value-minimum)/range*12;
     return{x,y,value:point.value};
   });
   const polyline=coordinates.map(point=>point.x.toFixed(1)+','+point.y.toFixed(1)).join(' ');
   const title=points.map(point=>String(point&&point.month||'')+': '+(Number.isInteger(Number(point&&point.value))?Number(point.value):'—')).join(' · ');
   return '<div class="network-base3-inner" title="'+escapeNetworkHtml(title)+'">'+
-    '<svg class="network-base3-spark '+direction+'" viewBox="0 0 260 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'+
+    '<svg class="network-base3-spark '+direction+'" viewBox="0 0 220 36" preserveAspectRatio="xMidYMid meet" aria-hidden="true">'+
       (coordinates.length>1?'<polyline class="trend" points="'+polyline+'"></polyline>':'')+
-      coordinates.map(point=>'<circle class="point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="2.2"></circle>').join('')+
+      coordinates.map(point=>'<circle class="point" cx="'+point.x.toFixed(1)+'" cy="'+point.y.toFixed(1)+'" r="2.7"></circle>').join('')+
       coordinates.map(point=>'<text class="value-label" x="'+point.x.toFixed(1)+'" y="'+Math.max(8,point.y-5).toFixed(1)+'">'+point.value+'</text>').join('')+
-    '</svg></div>';
+    '</svg><span class="network-base3-delta '+direction+'">'+deltaLabel+'</span></div>';
 }
 
 function renderNetworkRanking(){
@@ -2093,12 +2104,13 @@ function renderNetworkRanking(){
       '<td class="network-master">'+escapeNetworkHtml(master.name)+'</td>'+
       '<td><span class="network-branch-label"><span class="network-branch-dot '+master.branchClass+'"></span>'+escapeNetworkHtml(master.branchName)+'</span></td>'+
       '<td class="network-base3">'+networkBase3SparklineHtml(master.base3History)+'</td>'+
+      '<td class="network-base3">'+networkBase3SparklineHtml(master.base7History)+'</td>'+
       '<td><div class="network-cell-value">'+master.clients+networkLeaderMarker(masterMax.clients>0&&Number(master.clients)===masterMax.clients,'Лучший по клиентам')+'</div>'+networkProgressHtml(master.clients,masterMax.clients,'clients')+'</td>'+
       '<td class="network-service-revenue"><div class="network-cell-value">'+shortRub(master.servicesRevenue)+networkLeaderMarker(masterMax.services>0&&Number(master.servicesRevenue)===masterMax.services,'Лучший по выручке услуг')+'</div>'+networkProgressHtml(master.servicesRevenue,masterMax.services,'services')+'</td>'+
       '<td><div class="network-cell-value">'+shortRub(master.goodsRevenue)+networkLeaderMarker(masterMax.goods>0&&Number(master.goodsRevenue)===masterMax.goods,'Лучший по товарам')+'</div>'+networkProgressHtml(master.goodsRevenue,masterMax.goods,'goods')+'</td>'+
       '<td class="network-plan"><div class="network-cell-value">'+(master.planPercent===null?'—':master.planPercent+'%')+networkLeaderMarker(master.planPercent!==null&&masterMax.plan>0&&Number(master.planPercent)===masterMax.plan,'Лучший процент выполнения плана')+'</div>'+networkProgressHtml(master.planPercent,100,'plan')+'</td>'+
     '</tr>'
-  ).join(''):'<tr><td colspan="8"><div class="network-empty">Данные мастеров обновляются…</div></td></tr>';
+  ).join(''):'<tr><td colspan="9"><div class="network-empty">Данные мастеров обновляются…</div></td></tr>';
 
   const updated=networkRankingState.branches.map(branch=>branch.updatedAt).filter(Boolean).join(' · ');
   document.getElementById('networkUpdated').textContent=updated?'Актуально: '+updated:'Данные двух филиалов обновлены';
@@ -2128,7 +2140,7 @@ async function updateNetworkRanking(currentBranchId=cid){
   try{
     if(!NETWORK_BRANCHES.some(branch=>branch.id===String(currentBranchId)))throw new Error('Current branch is outside network scope');
     const payload=await requestNetworkBranches();
-    const ranking=buildNetworkRanking(payload.branches,payload.base3History);
+    const ranking=buildNetworkRanking(payload.branches,payload.base3History,payload.base7History);
     if(ranking.branches.length!==NETWORK_BRANCHES.length)throw new Error('Incomplete network data');
     networkRankingState.branches=ranking.branches;
     networkRankingState.masters=ranking.masters;
