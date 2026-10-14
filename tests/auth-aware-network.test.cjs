@@ -21,14 +21,25 @@ function authRuntime(){
   const calls=[];
   const context=vm.createContext({
     Date,JSON,Object,Array,isFinite,
-    Utilities:{DigestAlgorithm:{SHA_256:'sha'},Charset:{UTF_8:'utf8'},computeDigest(){return [0];}},
+    Utilities:{DigestAlgorithm:{SHA_256:'sha'},Charset:{UTF_8:'utf8'},computeDigest(){return [0];},formatDate(){return '2026-10';}},
     PropertiesService:{getScriptProperties(){return{
       getProperty(key){return records[key.replace(/[0-9a-f]{64}$/,'digest')]||null;},
       getProperties(){return records;},setProperty(key,value){records[key]=value;}
     }}},
     LockService:{getScriptLock(){return{tryLock(){return true;},releaseLock(){}};}},
     jsonResponse_(value){return value;},
-    doGetTvBoard(companyId){calls.push(String(companyId));return{branchId:String(companyId),branchName:String(companyId),masters:[],kpiMasters:[],clients:{},sales:{}};},
+    fetchStoreProjection_(){
+      const result={};
+      for(let index=0;index<6;index++)result['base3m'+index]=[
+        {name:'Виталий',loc:'Менделеева',active_clients:{b3:40+index,b3_list:[{phone:'+70000000000'}]}},
+        {name:'Дмитрий М.',loc:'Энтузиастов',active_clients:{b3:55-index}}
+      ];
+      return result;
+    },
+    doGetTvBoard(companyId){calls.push(String(companyId));return{
+      branchId:String(companyId),branchName:String(companyId),
+      masters:[{name:String(companyId)==='694866'?'Виталий':'Дмитрий М.'}],kpiMasters:[],clients:{},sales:{}
+    };},
     doGetTablo(){return[];},requireAdminToken_(){},buildFreeSlots(){}
   });
   vm.runInContext(authSource,context);
@@ -54,6 +65,26 @@ test('the authenticated POST gate routes network TV reads instead of rejecting t
   assert.equal(result.success,true);
   assert.deepEqual(Array.from(calls),['694866','1076318']);
   assert.equal(result.data.branches.length,2);
+});
+
+test('network read exposes only six aggregate Base 3+ points for active masters',()=>{
+  const {context}=authRuntime();
+  const result=context.legacyTvRead_({
+    action:'getNetworkTvBoard',organization_id:'6a778c5d-e8be-49b5-a273-130691b3116f',company_id:'694866',deviceToken:token
+  });
+  assert.equal(result.success,true);
+  assert.equal(result.data.base3History.months.length,6);
+  assert.equal(result.data.base3History.masters.length,2);
+  assert.deepEqual(Array.from(result.data.base3History.masters[0].values,point=>point.value),[40,41,42,43,44,45]);
+  const serialized=JSON.stringify(result.data.base3History);
+  assert.doesNotMatch(serialized,/phone|client|member|\+70000000000/i);
+});
+
+test('Base 3+ history uses the Yekaterinburg calendar month at the UTC month boundary',()=>{
+  const {context}=authRuntime();
+  context.Utilities.formatDate=()=> '2026-11';
+  const months=context.legacyTvBase3Months_();
+  assert.deepEqual(Array.from(months,item=>item.period),['2026-06','2026-07','2026-08','2026-09','2026-10','2026-11']);
 });
 
 test('network read reuses tv.board.read and does not mutate or replace device sessions',()=>{
