@@ -31,8 +31,8 @@ function authRuntime(){
     fetchAnalyticsProjection_(){
       const result={};
       for(let index=0;index<6;index++)result['base3m'+index]=[
-        {name:'Виталий',loc:'Менделеева',active_clients:{b3:40+index,b3_list:[{phone:'+70000000000'}]}},
-        {name:'Дмитрий М.',loc:'Энтузиастов',active_clients:{b3:55-index}}
+        {name:'Виталий',loc:'Менделеева',active_clients:{b3:40+index,b7:20+index,b3_list:[{phone:'+70000000000'}],b7_list:[{phone:'+71111111111'}]}},
+        {name:'Дмитрий М.',loc:'Энтузиастов',active_clients:{b3:55-index,b7:30-index}}
       ];
       return result;
     },
@@ -67,7 +67,7 @@ test('the authenticated POST gate routes network TV reads instead of rejecting t
   assert.equal(result.data.branches.length,2);
 });
 
-test('network read exposes only six aggregate Base 3+ points for active masters',()=>{
+test('network read exposes only six aggregate Base 3+ and Base 7+ points for active masters',()=>{
   const {context}=authRuntime();
   const result=context.legacyTvRead_({
     action:'getNetworkTvBoard',organization_id:'6a778c5d-e8be-49b5-a273-130691b3116f',company_id:'694866',deviceToken:token
@@ -76,8 +76,11 @@ test('network read exposes only six aggregate Base 3+ points for active masters'
   assert.equal(result.data.base3History.months.length,6);
   assert.equal(result.data.base3History.masters.length,2);
   assert.deepEqual(Array.from(result.data.base3History.masters[0].values,point=>point.value),[40,41,42,43,44,45]);
-  const serialized=JSON.stringify(result.data.base3History);
-  assert.doesNotMatch(serialized,/phone|client|member|\+70000000000/i);
+  assert.equal(result.data.base7History.months.length,6);
+  assert.equal(result.data.base7History.masters.length,2);
+  assert.deepEqual(Array.from(result.data.base7History.masters[0].values,point=>point.value),[20,21,22,23,24,25]);
+  const serialized=JSON.stringify({base3History:result.data.base3History,base7History:result.data.base7History});
+  assert.doesNotMatch(serialized,/phone|client|member|\+70000000000|\+71111111111/i);
 });
 
 test('Base 3+ history uses the Yekaterinburg calendar month at the UTC month boundary',()=>{
