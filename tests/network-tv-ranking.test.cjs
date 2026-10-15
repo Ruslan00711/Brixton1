@@ -141,6 +141,7 @@ test('network table keeps revenue sort and adds Base 3+ and Base 7+ after branch
   assert.match(html,/networkBase3SparklineHtml\(master\.base7History\)/);
   assert.match(html,/network-base3-spark \.trend\{fill:none/);
   assert.doesNotMatch(html,/network-base3-spark\.(?:up|down|flat) \.trend\{[^}]*fill:/);
+  assert.match(html,/\.network-base3-spark \.value-label\{[^}]*font-size:13px[^}]*font-weight:900/);
 });
 
 test('auth-aware baseline and both numeric branch links are preserved',()=>{
