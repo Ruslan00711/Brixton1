@@ -11,7 +11,7 @@ Required protected server variables in `/etc/brixton/tv-report.env`:
 
 The two tokens must be created through the standard `registerTvDevice` pairing flow with dedicated names and can be revoked independently. The same HMAC secret is stored in Apps Script property `TV_SCREENSHOT_RENDER_SECRET`. The existing `TELEGRAM_BOT_TOKEN` and existing chat/topic mappings are reused only by Apps Script.
 
-The release tree is owned by `root:brixton-tv-report` with no access for other users. The service keeps `DynamicUser=yes` and receives read/execute access only through that supplementary system group.
+The release tree is owned by `root:brixton-tv-report-readers` with no access for other users. The service keeps `DynamicUser=yes` and receives read/execute access only through that separately named supplementary system group, avoiding a collision with systemd's dynamic service identity.
 
 `tvScreenshotScheduler` runs every five minutes but acts only from 21:00 through 21:14 Asia/Yekaterinburg. Per-target daily idempotency keys prevent duplicates and allow a failed destination to retry without resending successful destinations.
 
