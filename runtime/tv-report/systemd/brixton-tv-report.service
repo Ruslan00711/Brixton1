@@ -6,6 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 DynamicUser=yes
+SupplementaryGroups=brixton-tv-report
 WorkingDirectory=/opt/brixton/tv-report/current
 ExecStart=/usr/bin/node /opt/brixton/tv-report/current/server.cjs
 EnvironmentFile=/etc/brixton/tv-report.env
