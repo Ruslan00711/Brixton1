@@ -1,0 +1,22 @@
+[Unit]
+Description=BRIXTON authenticated TV screenshot renderer
+After=network-online.target brixton-legacy-device.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+WorkingDirectory=/opt/brixton/tv-report/current
+ExecStart=/usr/bin/node /opt/brixton/tv-report/current/server.cjs
+EnvironmentFile=/etc/brixton/tv-report.env
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=768M
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

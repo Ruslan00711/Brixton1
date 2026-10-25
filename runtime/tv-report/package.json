@@ -1,0 +1,14 @@
+{
+  "name": "brixton-tv-report-renderer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Authenticated BRIXTON TV screenshot renderer for the existing Telegram reporting flow",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node --test test/*.test.cjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}
