@@ -29,6 +29,7 @@ function rankingRuntime(){
     ${readFunction('normalizeNetworkMasterName')}
     ${readFunction('escapeNetworkHtml')}
     ${readFunction('buildNetworkRanking')}
+    ${readFunction('networkClientMixHtml')}
     ${readFunction('networkBase3SparklineHtml')}
   `,context);
   return context;
@@ -127,6 +128,39 @@ test('fresh payload values replace prior monthly figures on every rebuild',()=>{
   assert.equal(refreshed.branches[0].goods,8000);
 });
 
+test('client mix uses new-to-master monthly field and never absolute-new field',()=>{
+  const runtime=rankingRuntime();
+  const result=runtime.buildNetworkRanking([
+    branch('694866','Менделеева',[{
+      id:1,name:'Иван',monthTotal:20,monthNewForMaster:5,monthAbsNew:13
+    }],[{name:'Иван',servicesTotal:100000,goodsTotal:5000,servicesGoal:200000}]),
+    branch('1076318','Энтузиастов',[],[])
+  ]);
+  assert.equal(result.masters[0].clients,20);
+  assert.equal(result.masters[0].newForMaster,5);
+  assert.equal(result.masters[0].returningForMaster,15);
+  const mix=runtime.networkClientMixHtml(result.masters[0]);
+  assert.match(mix,/width:75\.0%/);
+  assert.match(mix,/width:25\.0%/);
+  assert.match(mix,/Постоянные у мастера: 75% \(15\)/);
+  assert.match(mix,/Новые этому мастеру: 25% \(5\)/);
+  assert.doesNotMatch(mix,/13/);
+});
+
+test('client mix clamps invalid new-to-master counts and hides ratios without clients',()=>{
+  const runtime=rankingRuntime();
+  const result=runtime.buildNetworkRanking([
+    branch('694866','Менделеева',[{id:1,name:'Иван',monthTotal:4,monthNewForMaster:99}],[{name:'Иван',servicesTotal:100000}]),
+    branch('1076318','Энтузиастов',[],[{name:'Только KPI',servicesTotal:50000}])
+  ]);
+  const ivan=result.masters.find(master=>master.name==='Иван');
+  const fallback=result.masters.find(master=>master.name==='Только KPI');
+  assert.equal(ivan.newForMaster,4);
+  assert.equal(ivan.returningForMaster,0);
+  assert.match(runtime.networkClientMixHtml(ivan),/width:100\.0%/);
+  assert.match(runtime.networkClientMixHtml(fallback),/network-client-mix-empty">—/);
+});
+
 test('rotation order and timing include one-minute network and optional announcements',()=>{
   assert.match(html,/const networkScreen=\{id:'networkScreen',duration:60000/);
   assert.match(html,/const screens=\[dashboardScreen,networkScreen,scheduleScreen,announcementScreen\]/);
@@ -134,9 +168,11 @@ test('rotation order and timing include one-minute network and optional announce
   assert.match(html,/if\(screen\.id==='announcementScreen'\)return announcementItems\.length>0/);
 });
 
-test('network table keeps revenue sort and adds Base 3+ and Base 7+ after branch',()=>{
-  assert.match(html,/<th>Филиал<\/th><th>База 3\+ · 6 мес\.<\/th><th>База 7\+ · 6 мес\.<\/th><th>Клиентов<\/th>/);
+test('network table keeps revenue sort and adds Base 3+, Base 7+ and new-to-master mix',()=>{
+  assert.match(html,/<th>Филиал<\/th><th>База 3\+ · 6 мес\.<\/th><th>База 7\+ · 6 мес\.<\/th><th>Клиентов<\/th><th>Пост\. \/ новые мастеру<\/th>/);
   assert.match(html,/masters\.sort\(\(a,b\)=>b\.servicesRevenue-a\.servicesRevenue/);
+  assert.match(html,/networkClientMixHtml\(master\)/);
+  assert.match(html,/colspan="10"/);
   assert.match(html,/networkBase3SparklineHtml\(master\.base3History\)/);
   assert.match(html,/networkBase3SparklineHtml\(master\.base7History\)/);
   assert.match(html,/network-base3-spark \.trend\{fill:none/);
