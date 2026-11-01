@@ -8,6 +8,7 @@ const path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'..','admin.html'),'utf8');
 
 test('admin exposes branch-scoped TV visibility controls for masters',()=>{
+  assert.match(html,/const WEBAPP_URL='\/legacy-api'/);
   assert.match(html,/tvHiddenMasters=\{'694866':\[\],'1076318':\[\]\}/);
   assert.match(html,/checkbox\.className='tv-visibility-input'/);
   assert.match(html,/Показывать на TV/);
