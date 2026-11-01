@@ -1,6 +1,6 @@
 # Active staff synchronization
 
-The production-safe patch is based on immutable Apps Script version 165.
+The production-safe patch is based on immutable Apps Script version 171, which preserves the existing daily authenticated TV screenshot flow.
 
 Rules:
 
@@ -13,4 +13,4 @@ Rules:
 
 This is required because equal display names can exist in different branches. In particular, a new `Яна` in Mendeleeva must not collide with the existing `Яна` in Entuziastov. A dismissed employee such as `Тагир` must disappear from the current roster without deleting historical metrics.
 
-Deployment must create a new immutable Apps Script version and switch only the existing deployment. Rollback target remains version 165.
+Deployment uses immutable Apps Script version 177 and switches only the existing production deployment. Rollback target remains version 171.
